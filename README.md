@@ -1,1 +1,1 @@
-# redteaming-arena
+# redteam-arena
