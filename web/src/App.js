@@ -4,6 +4,7 @@ import CountdownPage from './components/CountdownPage';
 import ChatbotPage from './components/ChatbotPage';
 import FailurePage from './components/FailurePage';
 import SuccessPage from './components/SuccessPage';
+import LeaderboardPage from './components/Leaderboard';
 import phrasesData from './data/phrases.json';
 
 const TIMER_DURATION = 60; // 1 minute
@@ -47,12 +48,10 @@ const App = () => {
     setTimeLeft(TIMER_DURATION);
   };
 
-  const showLeaderboard = () => {
-    setPage('rules');
-    setCount(3);
-    setTimeLeft(TIMER_DURATION);
+  const restart = () => {
     setSuccessTime(null);
-    setCurrentPhrase(null);
+    setTimeLeft(TIMER_DURATION);
+    startCountdown()
   };
 
   const handleSuccess = (timeTaken) => {
@@ -71,13 +70,14 @@ const App = () => {
           phrase={currentPhrase}
         />
       )}
-      {page === 'failure' && <FailurePage onReset={showLeaderboard} />}
+      {page === 'failure' && <FailurePage onReset={restart} />}
       {page === 'success' && (
         <SuccessPage 
-          onReset={showLeaderboard} 
+          onReset={restart} 
           timeTaken={TIMER_DURATION - successTime} 
         />
       )}
+      {page === 'leaderboard' && <LeaderboardPage />}
     </div>
   );
 };
