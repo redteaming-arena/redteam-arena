@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getModelOutput } from '../utils/api';
+import { getModelOutput } from '../services/oldModelAPI';
 
 const ChatbotPage = ({ timeLeft, onSuccess, phrase }) => {
   const [messages, setMessages] = useState([]);
