@@ -5,7 +5,7 @@ import ChatbotPage from './components/ChatbotPage';
 import FailurePage from './components/FailurePage';
 import SuccessPage from './components/SuccessPage';
 import LeaderboardPage from './components/Leaderboard';
-import phrasesData from './data/phrases.json';
+import { createGame } from './services/api';
 
 const TIMER_DURATION = 60; // 1 minute
 
@@ -15,6 +15,7 @@ const App = () => {
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
   const [successTime, setSuccessTime] = useState(null);
   const [currentPhrase, setCurrentPhrase] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
 
   useEffect(() => {
     if (page === 'countdown' && count > 0) {
@@ -36,11 +37,22 @@ const App = () => {
     }
   }, [page]);
 
-  const startCountdown = () => {
-    const randomIndex = Math.floor(Math.random() * phrasesData.phrases.length);
-    setCurrentPhrase(phrasesData.phrases[randomIndex]);
-    setPage('countdown');
-    setCount(3);
+  useEffect(() => {
+    console.log(sessionId)
+  }, [sessionId])
+
+  const startCountdown = async () => {
+    try {
+      const data = await createGame();
+      console.log('Game created:', data);
+      setSessionId(data.session_id);
+      setCurrentPhrase(data.target_phrase)
+      setPage('countdown');
+      setCount(3);
+    } catch (error) {
+      console.error('Failed to start game:', error);
+      alert(`Failed to start game: ${error.message}`);
+    }
   };
   
   const startChat = () => {
