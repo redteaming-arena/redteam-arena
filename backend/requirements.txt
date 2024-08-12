@@ -11,3 +11,6 @@ pytest
 httpx
 openai
 python-dotenv
+pydantic_settings
+python-multipart
+anthropic
