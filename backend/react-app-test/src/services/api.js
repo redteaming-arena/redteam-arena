@@ -2,7 +2,7 @@
 
 import { getToken } from '../utils/auth';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'http://35.192.77.48:8000';
 
 const handleResponse = async (response) => {
     const data = await response.json();

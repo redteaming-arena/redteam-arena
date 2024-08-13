@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { getModelOutput } from '../services/oldModelAPI';
+import { gameChat } from '../services/api';
 
-const ChatbotPage = ({ timeLeft, onSuccess, phrase }) => {
+const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -13,10 +13,11 @@ const ChatbotPage = ({ timeLeft, onSuccess, phrase }) => {
       setIsLoading(true);
 
       try {
-        const botResponse = await getModelOutput(input);
-        setMessages(msgs => [...msgs, { text: botResponse, sender: 'bot' }]);
+        const data = await gameChat(sessionId, input);
+        setMessages(data.chat_history || []);
         
-        if (phrase && botResponse.toLowerCase().includes(phrase.toLowerCase())) {
+        console.log(data.chat_history[data.chat_history.length-1].model.toLowerCase())
+        if (phrase && data.chat_history[data.chat_history.length-1].model.toLowerCase().includes(phrase.toLowerCase())) {
           onSuccess(60 - timeLeft); // Pass the time taken to succeed
         }
       } catch (error) {
@@ -43,24 +44,23 @@ const ChatbotPage = ({ timeLeft, onSuccess, phrase }) => {
         <div className="text-xl">{timeLeft}s</div>
       </div>
       <div className="w-[60%] bg-[#202020] p-4 space-y-4 border border-gray-700 rounded-lg">
-        <div className="flex-grow overflow-auto p-4 bg-[#202020] space-y-4 h-[60vh]">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`p-2 rounded-lg max-w-[95%] inline-block ${
-                  message.sender === 'user'
-                    ? 'bg-green-500 text-black border border-black text-right'
-                    : 'bg-black text-green-500 text-left'
-                }`}
-              >
-                {message.text}
+      <div className="flex-grow overflow-auto p-4 bg-[#202020] space-y-4 h-[60vh]">
+        {messages.map((message, index) => (
+          <div key={index} className="space-y-2">
+            <div className="flex justify-end">
+              <div className="p-2 rounded-lg max-w-[95%] inline-block bg-green-500 text-black border border-black text-right">
+                {message.user}
               </div>
             </div>
-          ))}
-        </div>
+            <div className="flex justify-start">
+              <div className="p-2 rounded-lg max-w-[95%] inline-block bg-black text-green-500 text-left">
+                {message.model}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
         <div className="p-4 bg-black">
           <div className="flex space-x-2">
             <input
@@ -82,7 +82,6 @@ const ChatbotPage = ({ timeLeft, onSuccess, phrase }) => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

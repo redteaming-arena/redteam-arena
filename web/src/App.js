@@ -6,6 +6,7 @@ import FailurePage from './components/FailurePage';
 import SuccessPage from './components/SuccessPage';
 import LeaderboardPage from './components/Leaderboard';
 import { createGame } from './services/api';
+import { setToken } from './services/auth';
 
 const TIMER_DURATION = 60; // 1 minute
 
@@ -37,14 +38,11 @@ const App = () => {
     }
   }, [page]);
 
-  useEffect(() => {
-    console.log(sessionId)
-  }, [sessionId])
-
   const startCountdown = async () => {
     try {
+      const myToken = process.env.REACT_APP_DEV_LOGIN_TOKEN
+      setToken(myToken)
       const data = await createGame();
-      console.log('Game created:', data);
       setSessionId(data.session_id);
       setCurrentPhrase(data.target_phrase)
       setPage('countdown');
@@ -80,6 +78,7 @@ const App = () => {
           timeLeft={timeLeft} 
           onSuccess={handleSuccess}
           phrase={currentPhrase}
+          sessionId={sessionId}
         />
       )}
       {page === 'failure' && <FailurePage onReset={restart} />}
