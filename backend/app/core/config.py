@@ -7,6 +7,6 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: list = ["http://35.192.77.48:8082", "http://35.192.77.48:3000"]
     SECRET_KEY: str = "YOUR_SECRET_KEY_HERE"  # In production, use a proper secret key
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30000
 
 settings = Settings()
