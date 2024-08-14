@@ -1,6 +1,9 @@
 # app/api/games.py
 
+import time
+import json
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from app.core.security import get_current_user
 from app.schemas.game import GameCreate, GameChat, GameState
 from app.db.database import games_db
@@ -10,6 +13,7 @@ from dotenv import load_dotenv
 import os
 from app.ai_models.openai_model import OpenAIModel
 from app.ai_models.anthropic_model import AnthropicModel
+from typing import AsyncGenerator
 
 import random
 
@@ -46,39 +50,61 @@ async def create_game(current_user: dict = Depends(get_current_user)):
     return {"session_id": game_id, "target_phrase": target_phrase}
 
 
-@router.post("/chat", response_model=GameChat)
+@router.post("/chat")
 async def game_chat(
     session_id: UUID = Query(..., description="The game session ID"),
     user_input: str = Query(..., description="The user's input message"),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    stream: bool = Query(False, description="Whether to stream the response")
 ):
     if session_id not in games_db:
         raise HTTPException(status_code=404, detail="Game session not found")
+    
     game = games_db[session_id]
     if game["user_email"] != current_user["email"]:
         raise HTTPException(status_code=403, detail="Not authorized to access this game")
-    
-    try:
-        model_response = ai_model.generate_response(game["chat_history"], user_input)
-    except Exception as e:
-        logger.error(f"Error calling AI API: {str(e)}")
-        model_response = "I'm sorry, I'm having trouble responding right now."
 
-    # Check if the game is won
-    if game["target_phrase"].lower() in model_response.lower():
-        game["state"] = GameState.win
-    
-    # Add the user input and model response to chat history
-    game["chat_history"].append({"user": user_input, "model": model_response})
-    
-    response_data = {
-        "model_response": model_response, 
-        "game_state": game["state"],
-        "chat_history": game["chat_history"],
-        "target_phrase": game["target_phrase"]
-    }
-    logger.info(f"Chat in game {session_id} for user: {current_user['email']}, response: {response_data}")
-    return response_data
+    async def generate_response() -> AsyncGenerator[str, None]:
+        try:
+            model_response = ai_model.generate_response(game["chat_history"], user_input, stream=stream)
+            chunk_response = ""
+            state = GameState.ongoing
+
+            async for chunk in model_response:
+                chunk_response += chunk
+                if game["target_phrase"].lower() in chunk_response.lower():
+                    state = GameState.win
+                
+                yield f"data: {json.dumps({'model_response': chunk, 'game_state': state, 'target_phrase': game['target_phrase']})}\n\n"
+
+            # Update game state and chat history after streaming
+            game["state"] = state
+            game["chat_history"].append({"user": user_input, "model": chunk_response})
+
+        except Exception as e:
+            logger.error(f"Error calling AI API: {str(e)}")
+            yield f"data: {json.dumps({'model_response': 'I\'m sorry, I\'m having trouble responding right now.', 'game_state': game['state'], 'target_phrase': game['target_phrase']})}\n\n"
+
+    if stream:
+        return StreamingResponse(generate_response(), media_type="text/event-stream")
+    else:
+        # For non-streaming responses, collect the entire response
+        full_response = ""
+        async for chunk in generate_response():
+            full_response += chunk
+
+        # Parse the last chunk to get the final state
+        last_chunk = json.loads(full_response.split("\n\n")[-2].replace("data: ", ""))
+        
+        response_data = {
+            "model_response": last_chunk["model_response"],
+            "game_state": last_chunk["game_state"],
+            "chat_history": game["chat_history"],
+            "target_phrase": game["target_phrase"]
+        }
+        
+        logger.info(f"Chat in game {session_id} for user: {current_user['email']}, response: {response_data}")
+        return response_data
 
 
 # Add a new endpoint to get the chat history
@@ -93,3 +119,4 @@ async def get_chat_history(
     if game["user_email"] != current_user["email"]:
         raise HTTPException(status_code=403, detail="Not authorized to access this game")
     return game["chat_history"]
+    

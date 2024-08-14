@@ -6,10 +6,9 @@ from .base import AIModel
 
 class OpenAIModel(AIModel):
     def __init__(self, api_key):
-        openai.api_key = api_key
-        self.client = OpenAI()
+        self.client = OpenAI(api_key=api_key)
 
-    def generate_response(self, conversation_history, user_input):
+    def generate_response(self, conversation_history, user_input, stream=False):
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
         ]
@@ -21,6 +20,9 @@ class OpenAIModel(AIModel):
         response = self.client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=messages,
+            stream=stream
         )
-        print(response)
-        return response.choices[0].message.content
+        if stream: 
+            return response
+        else:
+            return response.choices[0].message.content
