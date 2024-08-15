@@ -87,7 +87,6 @@ async def game_chat(
                 "target_phrase": game['target_phrase'],
             }
             yield f"event:end\ndata: {json.dumps(obj)}\n\n"
-            #yield f"event:end\ndata: {json.dumps({'model_response': 'I\'m sorry, I\'m having trouble responding right now.', 'game_state': game['state'], 'target_phrase': game['target_phrase']})}\n\n"
 
     if stream:
         return StreamingResponse(generate_response(), media_type="text/event-stream")
@@ -163,7 +162,6 @@ async def test_game_chat(
                     "target_phrase": game['target_phrase'],
                 }
                 yield f"event: end\ndata: {json.dumps(obj)}\n\n\n"
-                # yield f"event: end\ndata: {json.dumps({"model_response" : full_response, "game_state" : state, "target_phrase": game["target_phrase"]})}\n\n\n"
                 
             except asyncio.CancelledError as error:
                 print(error)
@@ -174,7 +172,6 @@ async def test_game_chat(
                     "target_phrase": game['target_phrase'],
                 }
                 yield f"event: end\ndata: {json.dumps(obj)}\n\n\n"
-                # yield f"event: end\ndata: {json.dumps({"model_response" : full_response, "game_state" : state, "target_phrase": game["target_phrase"]})}\n\n\n"
             finally:
                 game["chat_history"].append({"user": user_input, "model": full_response.strip()})
                 game["state"] = state
