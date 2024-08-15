@@ -58,31 +58,27 @@ async def game_chat(
 ):
     if session_id not in games_db:
         raise HTTPException(status_code=404, detail="Game session not found")
-    
     game = games_db[session_id]
     if game["user_email"] != current_user["email"]:
         raise HTTPException(status_code=403, detail="Not authorized to access this game")
 
     async def generate_response() -> AsyncGenerator[str, None]:
         try:
-            model_response = ai_model.generate_response(game["chat_history"], user_input, stream=stream)
             chunk_response = ""
             state = GameState.ongoing
-
-            async for chunk in model_response:
-                chunk_response += chunk
+            for chunk in ai_model.generate_response(game["chat_history"], user_input, stream=stream):
+                chunk_response += chunk.choices[0].delta.content
                 if game["target_phrase"].lower() in chunk_response.lower():
                     state = GameState.win
-                
-                yield f"event:message\ndata: {json.dumps({'model_response': chunk, 'game_state': state, 'target_phrase': game['target_phrase']})}\n\n"
+                if stream:
+                    yield f"event:message\ndata: {json.dumps({'model_response': chunk.choices[0].delta.content, 'game_state': state, 'target_phrase': game['target_phrase']})}\n\n"
             
-            # end response
-            yield f'event:end\ndata: {json.dumps({'model_response': chunk_response, 'game_state': state, 'target_phrase': game['target_phrase']})}\n\n'
+            # End response
+            yield f'event:end\ndata: {json.dumps({"model_response": chunk_response, "game_state": state, "target_phrase": game["target_phrase"]})}\n\n'
             
             # Update game state and chat history after streaming
             game["state"] = state
             game["chat_history"].append({"user": user_input, "model": chunk_response})
-
         except Exception as e:
             logger.error(f"Error calling AI API: {str(e)}")
             yield f"event:end\ndata: {json.dumps({'model_response': 'I\'m sorry, I\'m having trouble responding right now.', 'game_state': game['state'], 'target_phrase': game['target_phrase']})}\n\n"
@@ -93,18 +89,15 @@ async def game_chat(
         # For non-streaming responses, collect the entire response
         full_response = [chunk async for chunk in generate_response()]
         # Parse the last chunk to get the final state
-        last_chunk = json.loads(full_response[-1])
-        
+        last_chunk = json.loads(full_response[-1].split("data: ")[1])
         response_data = {
             "model_response": last_chunk["model_response"],
             "game_state": last_chunk["game_state"],
             "chat_history": game["chat_history"],
             "target_phrase": game["target_phrase"]
         }
-        
         logger.info(f"Chat in game {session_id} for user: {current_user['email']}, response: {response_data}")
         return response_data
-
 
 # Add a new endpoint to get the chat history
 @router.get("/history/{session_id}", response_model=list)
