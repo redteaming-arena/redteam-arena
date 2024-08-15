@@ -88,9 +88,10 @@ const App = () => {
       console.error("Login failed:", loginError);
       try {
           const registerData = await register(username, password);
-            setToken(registerData.access_token);
-            setIsUserLoggedIn(true);
-            setPage('rules');
+          const data = await login(username, password)
+          setToken(data.access_token);
+          setIsUserLoggedIn(true);
+          setPage('rules');
       } catch (registerError) {
           console.error("Registration failed:", registerError);
           alert("Failed to login or register. Please try again.");
@@ -140,8 +141,6 @@ const App = () => {
           count={count}
           onComplete={startChat} 
           phrase={currentPhrase}
-          onAbout={handleAbout}
-          showAbout={showAbout} // Set to false to hide the About button
         />
       )}
       {page === 'chat' && (
@@ -150,8 +149,6 @@ const App = () => {
           onSuccess={handleSuccess}
           phrase={currentPhrase}
           sessionId={sessionId}
-          onAbout={handleAbout}
-          showAbout={showAbout} // Set to false to hide the About button
         />
       )}
       {page === 'failure' && (
