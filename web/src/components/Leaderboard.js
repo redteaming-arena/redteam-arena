@@ -10,7 +10,7 @@ const Leaderboard = () => {
   }, []);
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto text-white">
       <h2 className="text-2xl mb-4 text-center">Leaderboard</h2>
       <table className="w-full border-collapse">
         <thead>

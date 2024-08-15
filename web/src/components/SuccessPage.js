@@ -3,7 +3,7 @@ import Leaderboard from './Leaderboard';
 import NavButton from './NavButton';
 
 const SuccessPage = ({ onReset, timeTaken, onLogin, onAbout, showAbout = false }) => (
-  <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-500 font-mono p-4">
+  <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-500 p-4">
     <div className="absolute top-4 right-4 flex gap-2">
       <NavButton text="LOGIN" onClick={onLogin} />
       {showAbout && <NavButton text="ABOUT" onClick={onAbout} />}

@@ -7,7 +7,7 @@ const CountdownPage = ({ count, onComplete, phrase, onLogin, onAbout, showAbout 
   }, [count, onComplete]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-black text-white font-mono">
+    <div className="flex flex-col items-center justify-center h-screen bg-black text-white">
       <div className="absolute top-4 right-4 flex gap-2">
         <NavButton text="LOGIN" onClick={onLogin} />
         {showAbout && <NavButton text="ABOUT" onClick={onAbout} />}

@@ -17,7 +17,7 @@ const RulesPage = ({ onStart, onLogin, onAbout, showAbout = false }) => {
   }, [handleKeyPress]);
 
   return (
-    <div className="flex flex-col items-center justify-start h-screen bg-black text-white font-mono p-4 pt-16 relative">
+    <div className="flex flex-col items-center justify-start h-screen bg-black text-white font-vt323 p-4 pt-16">
       <div className="absolute top-4 right-4 flex gap-2">
         <NavButton text="LOGIN" onClick={onLogin} />
         {showAbout && <NavButton text="ABOUT" onClick={onAbout} />}
