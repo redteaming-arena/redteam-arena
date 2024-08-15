@@ -9,6 +9,7 @@ import LoginPage from './components/LoginPage';
 import { register, login, createGame } from './services/api';
 import { removeToken, setToken, getToken, isLoggedIn } from './services/auth';
 
+
 const TIMER_DURATION = 60; // 1 minute
 
 const App = () => {
@@ -41,7 +42,7 @@ const App = () => {
   }, [page]);
 
   useEffect(() => {
-    setIsUserLoggedIn(isLoggedIn() && (getToken() !== process.env.REACT_APP_DEV_LOGIN_TOKEN));
+    setIsUserLoggedIn(isLoggedIn());
     setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
   }, []);  
 
@@ -76,17 +77,24 @@ const App = () => {
 
   const handleLogin = async (username, password) => {
     try {
-      const data = await login(username, password)
+      const data = await login(username, password);
       console.log("LOGIN DATA", data);
       setToken(data.access_token);
+      console.log("New token:", data.access_token)
       setIsUserLoggedIn(true);
-      setPage('rules');  
-      console.log("Finished setting page.", getToken())
-    } catch (error) {
-      const data = await register(username, password);
-      setToken(data.access_token);
-      setIsUserLoggedIn(true);
-      setPage('rules');  
+      setPage('rules');
+      console.log("Finished setting page.", getToken());
+    } catch (loginError) {
+      console.error("Login failed:", loginError);
+      try {
+          const registerData = await register(username, password);
+            setToken(registerData.access_token);
+            setIsUserLoggedIn(true);
+            setPage('rules');
+      } catch (registerError) {
+          console.error("Registration failed:", registerError);
+          alert("Failed to login or register. Please try again.");
+      }
     }
   };
 
@@ -111,7 +119,7 @@ const App = () => {
   const showAbout = false;
 
   return (
-    <div className="h-screen bg-gray-800">
+    <div className="h-screen bg-black">
       {page === 'rules' && (
         <RulesPage 
           onStart={startCountdown}

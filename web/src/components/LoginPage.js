@@ -53,6 +53,7 @@ const LoginPage = ({ onLogin, onBack }) => {
             text="LOGIN"
             onClick={handleSubmit}
             className="px-4 py-2"
+            type="submit"
           />
         </div>
       </form>

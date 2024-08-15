@@ -1,6 +1,5 @@
 # app/api/games.py
-
-import time
+import asyncio
 import json
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
@@ -75,26 +74,26 @@ async def game_chat(
                 if game["target_phrase"].lower() in chunk_response.lower():
                     state = GameState.win
                 
-                yield f"data: {json.dumps({'model_response': chunk, 'game_state': state, 'target_phrase': game['target_phrase']})}\n\n"
-
+                yield f"event:message\ndata: {json.dumps({'model_response': chunk, 'game_state': state, 'target_phrase': game['target_phrase']})}\n\n"
+            
+            # end response
+            yield f'event:end\ndata: {json.dumps({'model_response': chunk_response, 'game_state': state, 'target_phrase': game['target_phrase']})}\n\n'
+            
             # Update game state and chat history after streaming
             game["state"] = state
             game["chat_history"].append({"user": user_input, "model": chunk_response})
 
         except Exception as e:
             logger.error(f"Error calling AI API: {str(e)}")
-            yield f"data: {json.dumps({'model_response': 'I\'m sorry, I\'m having trouble responding right now.', 'game_state': game['state'], 'target_phrase': game['target_phrase']})}\n\n"
+            yield f"event:end\ndata: {json.dumps({'model_response': 'I\'m sorry, I\'m having trouble responding right now.', 'game_state': game['state'], 'target_phrase': game['target_phrase']})}\n\n"
 
     if stream:
         return StreamingResponse(generate_response(), media_type="text/event-stream")
     else:
         # For non-streaming responses, collect the entire response
-        full_response = ""
-        async for chunk in generate_response():
-            full_response += chunk
-
+        full_response = [chunk async for chunk in generate_response()]
         # Parse the last chunk to get the final state
-        last_chunk = json.loads(full_response.split("\n\n")[-2].replace("data: ", ""))
+        last_chunk = json.loads(full_response[-1])
         
         response_data = {
             "model_response": last_chunk["model_response"],
@@ -120,3 +119,61 @@ async def get_chat_history(
         raise HTTPException(status_code=403, detail="Not authorized to access this game")
     return game["chat_history"]
     
+
+
+@router.post("/test/chat")
+async def test_game_chat(
+    user_input: str = Query(..., description="The user's input message"),
+    stream: bool = Query(True, description="Whether to stream the response")
+):
+    async def event_generator():
+            game = {
+                "state": GameState.ongoing,
+                "target_phrase": "secret phrase",
+                "chat_history": []
+            }
+            responses = [
+                "Here’s why this happens: \n serves as an end-of-line identifier, so the parser treats everything up to the first \n as one block (event) and the subsequent \n as another block with empty data. When the frontend parses this, it essentially ignores the second event and appends an empty string to the existing text. Consequently, the line break is ignored, potentially disrupting the entire markdown rendering.",
+                "That's an interesting point you've made.",
+                "Let me process that for a moment.",
+                "I see what you're saying.",
+                "Here's what I think about that:",
+            ]
+            
+            
+            full_response = ""
+            try:
+                for i, chunk in enumerate(responses[0].split(" ")):
+                    full_response += chunk + " "
+                    state = game["state"]
+                        
+                    response_data = {
+                        "model_response": chunk + " ",
+                        "game_state": state,
+                        "target_phrase": game["target_phrase"]
+                    }
+                    
+                    if stream:
+                        yield f"event: message\ndata: {json.dumps(response_data)}\n\n"
+                    else:
+                        yield json.dumps(response_data)
+                    await asyncio.sleep(0.1)  # Allow other tasks to run
+                yield f"event: end\ndata: {json.dumps({"model_response" : full_response, "game_state" : state, "target_phrase": game["target_phrase"]})}\n\n\n"
+                
+            except asyncio.CancelledError as error:
+                print(error)
+                print("Stream was cancelled")
+                yield f"event: end\ndata: {json.dumps({"model_response" : full_response, "game_state" : state, "target_phrase": game["target_phrase"]})}\n\n\n"
+            finally:
+                game["chat_history"].append({"user": user_input, "model": full_response.strip()})
+                game["state"] = state
+                print("Stream ended")
+
+    if stream:
+        return StreamingResponse(
+            event_generator(),
+            media_type="text/event-stream"
+        )
+    else:
+        response = [chunk async for chunk in event_generator(user_input, stream=False)]
+        return json.loads(response[-1])  # Return the last chunk for non-streaming response
