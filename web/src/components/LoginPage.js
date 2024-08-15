@@ -26,7 +26,7 @@ const LoginPage = ({ onLogin, onBack }) => {
             id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="w-full px-3 py-2 text-black border border-white bg-gray-800 focus:outline-none focus:border-cyan-500"
+            className="w-full px-3 py-2 text-white border border-white bg-gray-800 focus:outline-none focus:border-cyan-500"
             required
           />
         </div>
@@ -39,7 +39,7 @@ const LoginPage = ({ onLogin, onBack }) => {
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-3 py-2 text-black border border-white bg-gray-800 focus:outline-none focus:border-cyan-500"
+            className="w-full px-3 py-2 text-white border border-white bg-gray-800 focus:outline-none focus:border-cyan-500"
             required
           />
         </div>
