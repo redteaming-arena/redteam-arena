@@ -4,7 +4,6 @@ import CountdownPage from './components/CountdownPage';
 import ChatbotPage from './components/ChatbotPage';
 import FailurePage from './components/FailurePage';
 import SuccessPage from './components/SuccessPage';
-import LeaderboardPage from './components/Leaderboard';
 import LoginPage from './components/LoginPage';
 import { register, login, createGame } from './services/api';
 import { removeToken, setToken, isLoggedIn } from './services/auth';
@@ -42,9 +41,9 @@ const App = () => {
   }, [page]);
 
   useEffect(() => {
-    setIsUserLoggedIn(isLoggedIn());
+    setIsUserLoggedIn(false);
     setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
-  }, []);  
+  }, []);
 
   const startCountdown = async () => {
     try {
@@ -166,7 +165,6 @@ const App = () => {
           buttonText={isUserLoggedIn ? "LOGOUT" : "LOGIN"}
         />
       )}
-      {page === 'leaderboard' && <LeaderboardPage />}
     </div>
   );
 };

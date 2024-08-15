@@ -64,7 +64,7 @@ return handleResponse(response);
 };
 
 export const gameTestStreamEvent = (_, userInput) => {
-  const url = `${API_URL}/api/game/test/chat?user_input=${encodeURIComponent(userInput)}&stream=true`;
+  const url = `${API_URL}/api/game/chat?user_input=${encodeURIComponent(userInput)}&stream=true`;
   
   return {
     subscribe: (callbacks) => {

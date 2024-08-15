@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { gameTestStreamEvent } from "../services/api";
-import SubmitIcon from "../assests/submit";
+import { gameStreamEvent } from "../services/api";
+import SubmitIcon from "../assets/submit";
 
 
 const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, onAbout, showAbout = false }) => {
@@ -53,7 +53,7 @@ const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, onAbout, showAbou
       setCurrentStreamedMessage("");
   
       try {
-        const eventSource = gameTestStreamEvent(sessionId, input);
+        const eventSource = gameStreamEvent(sessionId, input);
         
         eventSourceRef.current = eventSource.subscribe({
           onopen: () => {
