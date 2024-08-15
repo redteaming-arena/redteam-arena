@@ -7,7 +7,7 @@ import SuccessPage from './components/SuccessPage';
 import LeaderboardPage from './components/Leaderboard';
 import LoginPage from './components/LoginPage';
 import { register, login, createGame } from './services/api';
-import { removeToken, setToken, getToken, isLoggedIn } from './services/auth';
+import { removeToken, setToken, isLoggedIn } from './services/auth';
 
 
 const TIMER_DURATION = 60; // 1 minute
@@ -78,16 +78,12 @@ const App = () => {
   const handleLogin = async (username, password) => {
     try {
       const data = await login(username, password);
-      console.log("LOGIN DATA", data);
       setToken(data.access_token);
-      console.log("New token:", data.access_token)
       setIsUserLoggedIn(true);
       setPage('rules');
-      console.log("Finished setting page.", getToken());
     } catch (loginError) {
-      console.error("Login failed:", loginError);
       try {
-          const registerData = await register(username, password);
+          await register(username, password);
           const data = await login(username, password)
           setToken(data.access_token);
           setIsUserLoggedIn(true);
