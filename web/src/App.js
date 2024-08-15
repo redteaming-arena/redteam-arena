@@ -69,23 +69,55 @@ const App = () => {
     setPage('success');
   };
 
+  const handleLogin = () => {
+    console.log("Login")
+  }
+
+  const handleAbout = () => {
+    console.log("About")
+  }
+
+  const showAbout = false
+
   return (
     <div className="h-screen bg-gray-800">
-      {page === 'rules' && <RulesPage onStart={startCountdown} />}
-      {page === 'countdown' && <CountdownPage count={count} onComplete={startChat} phrase={currentPhrase} />}
+      {page === 'rules' && (
+        <RulesPage 
+          onStart={startCountdown}
+          onLogin={handleLogin}
+          onAbout={handleAbout}
+          showAbout={showAbout} // Set to false to hide the About button
+        />
+      )}
+      {page === 'countdown' && (
+        <CountdownPage 
+          count={count}
+          onComplete={startChat} 
+          phrase={currentPhrase} 
+          onLogin={handleLogin}
+          onAbout={handleAbout}
+          showAbout={showAbout} // Set to false to hide the About button
+        />
+      )}
       {page === 'chat' && (
         <ChatbotPage 
           timeLeft={timeLeft} 
           onSuccess={handleSuccess}
           phrase={currentPhrase}
           sessionId={sessionId}
+          onLogin={handleLogin}
+          onAbout={handleAbout}
+          showAbout={showAbout} // Set to false to hide the About button
         />
       )}
       {page === 'failure' && <FailurePage onReset={restart} />}
       {page === 'success' && (
         <SuccessPage 
           onReset={restart} 
-          timeTaken={TIMER_DURATION - successTime} 
+          timeTaken={TIMER_DURATION - successTime}
+          onLogin={handleLogin}
+          onAbout={handleAbout}
+          showAbout={showAbout} // Set to false to hide the About button
         />
       )}
       {page === 'leaderboard' && <LeaderboardPage />}
