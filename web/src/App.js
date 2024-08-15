@@ -5,8 +5,10 @@ import ChatbotPage from './components/ChatbotPage';
 import FailurePage from './components/FailurePage';
 import SuccessPage from './components/SuccessPage';
 import LeaderboardPage from './components/Leaderboard';
-import { createGame } from './services/api';
-import { setToken } from './services/auth';
+import LoginPage from './components/LoginPage';
+import { register, login, createGame } from './services/api';
+import { removeToken, setToken, getToken, isLoggedIn } from './services/auth';
+
 
 const TIMER_DURATION = 60; // 1 minute
 
@@ -17,6 +19,7 @@ const App = () => {
   const [successTime, setSuccessTime] = useState(null);
   const [currentPhrase, setCurrentPhrase] = useState(null);
   const [sessionId, setSessionId] = useState(null);
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(isLoggedIn());
 
   useEffect(() => {
     if (page === 'countdown' && count > 0) {
@@ -38,13 +41,16 @@ const App = () => {
     }
   }, [page]);
 
+  useEffect(() => {
+    setIsUserLoggedIn(isLoggedIn() && (getToken() != process.env.REACT_APP_DEV_LOGIN_TOKEN));
+    setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
+  }, []);  
+
   const startCountdown = async () => {
     try {
-      const myToken = process.env.REACT_APP_DEV_LOGIN_TOKEN
-      setToken(myToken)
       const data = await createGame();
       setSessionId(data.session_id);
-      setCurrentPhrase(data.target_phrase)
+      setCurrentPhrase(data.target_phrase);
       setPage('countdown');
       setCount(3);
     } catch (error) {
@@ -69,28 +75,101 @@ const App = () => {
     setPage('success');
   };
 
+  const handleLogin = (username, password) => {
+    try {
+      //const data = login(username, password)
+      //console.log(data.access_token)
+      //setToken(data.access_token); TODO: FIX THIS
+      setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
+      setIsUserLoggedIn(true);
+      setPage('rules');  
+    } catch (error) {
+      //const data = register(username, password);
+      //setToken(data.access_token); TODO: FIX THIS
+      setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
+      setIsUserLoggedIn(true);
+      setPage('rules');  
+    }
+  };
+
+  const handleLogout = () => {
+    removeToken()
+    setIsUserLoggedIn(false);
+    setPage('rules');
+  };
+
+  const showLoginPage = () => {
+    setPage('login');
+  };
+
+  const handleAbout = () => {
+    console.log("About");
+  };
+
+  const handleBack = () => {
+    setPage('rules')
+  }
+
+  const showAbout = false;
+
   return (
-    <div className="h-screen bg-gray-800">
-      {page === 'rules' && <RulesPage onStart={startCountdown} />}
-      {page === 'countdown' && <CountdownPage count={count} onComplete={startChat} phrase={currentPhrase} />}
-      {page === 'chat' && (
-        <ChatbotPage 
-          timeLeft={timeLeft} 
-          onSuccess={handleSuccess}
-          phrase={currentPhrase}
-          sessionId={sessionId}
-        />
-      )}
-      {page === 'failure' && <FailurePage onReset={restart} />}
-      {page === 'success' && (
-        <SuccessPage 
-          onReset={restart} 
-          timeTaken={TIMER_DURATION - successTime} 
-        />
-      )}
-      {page === 'leaderboard' && <LeaderboardPage />}
-    </div>
-  );
+    <div className="h-screen bg-black">
+    {page === 'rules' && (
+      <RulesPage 
+        onStart={startCountdown}
+        onLogin={isUserLoggedIn ? handleLogout : showLoginPage}
+        onAbout={handleAbout}
+        showAbout={showAbout} // Set to false to hide the About button
+        buttonText={isUserLoggedIn ? "LOGOUT" : "LOGIN"}
+      />
+    )}
+    {page === 'login' && (
+      <LoginPage
+        onLogin={handleLogin}
+        onBack={handleBack}
+      />
+    )}
+    {page === 'countdown' && (
+      <CountdownPage 
+        count={count}
+        onComplete={startChat} 
+        phrase={currentPhrase} 
+        onAbout={handleAbout}
+        showAbout={showAbout} // Set to false to hide the About button
+      />
+    )}
+    {page === 'chat' && (
+      <ChatbotPage 
+        timeLeft={timeLeft} 
+        onSuccess={handleSuccess}
+        phrase={currentPhrase}
+        sessionId={sessionId}
+        onAbout={handleAbout}
+        showAbout={showAbout} // Set to false to hide the About button
+      />
+    )}
+    {page === 'failure' && (
+      <FailurePage 
+        onReset={restart}
+        onLogin={isUserLoggedIn ? handleLogout : showLoginPage}
+        onAbout={handleAbout}
+        showAbout={showAbout} // Set to false to hide the About button
+        buttonText={isUserLoggedIn ? "LOGOUT" : "LOGIN"}
+      />
+    )}
+    {page === 'success' && (
+      <SuccessPage 
+        onReset={restart} 
+        timeTaken={TIMER_DURATION - successTime}
+        onLogin={isUserLoggedIn ? handleLogout : showLoginPage}
+        onAbout={handleAbout}
+        showAbout={showAbout} // Set to false to hide the About button
+        buttonText={isUserLoggedIn ? "LOGOUT" : "LOGIN"}
+      />
+    )}
+    {page === 'leaderboard' && <LeaderboardPage />}
+  </div>
+);
 };
 
 export default App;
