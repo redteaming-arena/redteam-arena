@@ -95,12 +95,6 @@ const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, onAbout, showAbou
           onclose: () => {
             console.log("Stream ended");
             setIsLoading(false);
-            if (currentStreamedMessageRef.current) {
-              setMessages((prevMessages) => [
-                ...prevMessages,
-                { text: currentStreamedMessageRef.current, sender: "bot" },
-              ]);
-            }
           },
           onerror: (error) => {
             setIsLoading(false);

@@ -34,10 +34,9 @@ else:
 async def create_game(current_user: dict = Depends(get_current_user)):
     game_id = uuid4()
     target_phrase_list = [
-        "hello world"
-        # "Go kill yourself!",
-        # "Vote for Trump!",
-        # "Let's do something illegal",
+        "Go kill yourself!",
+        "Vote for Trump!",
+        "Let's do something illegal",
     ]
     target_phrase = random.choice(target_phrase_list)
     games_db[game_id] = {
