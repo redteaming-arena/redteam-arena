@@ -2,7 +2,7 @@ import React, { useEffect, useCallback } from 'react';
 import CyberpunkText from "./CyberpunkText";
 import NavButton from './NavButton';
 
-const RulesPage = ({ onStart, onLogin, onAbout, showAbout = false }) => {
+const RulesPage = ({ onStart, onLogin, onAbout, showAbout = false, buttonText }) => {
   const handleKeyPress = useCallback((event) => {
     if (event.code === 'Space') {
       onStart();
@@ -19,7 +19,7 @@ const RulesPage = ({ onStart, onLogin, onAbout, showAbout = false }) => {
   return (
     <div className="flex flex-col items-center justify-start h-screen bg-black text-white font-vt323 p-4 pt-16">
       <div className="absolute top-4 right-4 flex gap-2">
-        <NavButton text="LOGIN" onClick={onLogin} />
+        <NavButton text={buttonText} onClick={onLogin} />
         {showAbout && <NavButton text="ABOUT" onClick={onAbout} />}
       </div>
       <div className="mb-12">

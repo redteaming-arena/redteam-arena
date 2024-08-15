@@ -2,10 +2,10 @@ import React from 'react';
 import Leaderboard from './Leaderboard';
 import NavButton from './NavButton';
 
-const FailurePage = ({ onReset, onLogin, onAbout, showAbout = false }) => (
+const FailurePage = ({ onReset, onLogin, onAbout, showAbout = false, buttonText }) => (
   <div className="flex flex-col items-center justify-center min-h-screen bg-black text-red-500 p-4">
     <div className="absolute top-4 right-4 flex gap-2">
-      <NavButton text="LOGIN" onClick={onLogin} />
+      <NavButton text={buttonText} onClick={onLogin} />
       {showAbout && <NavButton text="ABOUT" onClick={onAbout} />}
     </div>
     <h1 className="text-6xl mb-4">You Failed.</h1>

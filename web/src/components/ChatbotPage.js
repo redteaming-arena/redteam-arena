@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { gameChat } from '../services/api';
-import NavButton from './NavButton'
 
-const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, onLogin, onAbout, showAbout = false }) => {
+const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, onAbout, showAbout = false }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -38,10 +37,6 @@ const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, onLogin, onAbout,
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-black text-green-500 font-mono">
-      <div className="absolute top-4 right-4 flex gap-2">
-        <NavButton text="LOGIN" onClick={onLogin} />
-        {showAbout && <NavButton text="ABOUT" onClick={onAbout} />}
-      </div>
       <div className="w-[60%] bg-[#202020] p-4 flex justify-between items-center">
         <h1 className="text-lg text-white text-center">
           Objective: {phrase || "Loading..."}
