@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { gameStreamEvent, gameTestStreamEvent } from "../services/api";
+import { gameTestStreamEvent } from "../services/api";
 import SubmitIcon from "../assests/submit";
-import NavButton from './NavButton'
 
 
 const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, onAbout, showAbout = false }) => {

@@ -46,6 +46,11 @@ const App = () => {
     setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
   }, []);  
 
+  useEffect(() => {
+    setIsUserLoggedIn(isLoggedIn() && (getToken() != process.env.REACT_APP_DEV_LOGIN_TOKEN));
+    setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
+  }, []);  
+
   const startCountdown = async () => {
     try {
       const data = await createGame();
