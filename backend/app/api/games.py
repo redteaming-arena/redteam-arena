@@ -81,7 +81,13 @@ async def game_chat(
             game["chat_history"].append({"user": user_input, "model": chunk_response})
         except Exception as e:
             logger.error(f"Error calling AI API: {str(e)}")
-            yield f"event:end\ndata: {json.dumps({'model_response': 'I\'m sorry, I\'m having trouble responding right now.', 'game_state': game['state'], 'target_phrase': game['target_phrase']})}\n\n"
+            obj = {
+                "model_response": "I'm sorry, I'm having trouble responding right now.",
+                "game_state": game['state'],
+                "target_phrase": game['target_phrase'],
+            }
+            yield f"event:end\ndata: {json.dumps(obj)}\n\n"
+            #yield f"event:end\ndata: {json.dumps({'model_response': 'I\'m sorry, I\'m having trouble responding right now.', 'game_state': game['state'], 'target_phrase': game['target_phrase']})}\n\n"
 
     if stream:
         return StreamingResponse(generate_response(), media_type="text/event-stream")
@@ -151,12 +157,24 @@ async def test_game_chat(
                     else:
                         yield json.dumps(response_data)
                     await asyncio.sleep(0.1)  # Allow other tasks to run
-                yield f"event: end\ndata: {json.dumps({"model_response" : full_response, "game_state" : state, "target_phrase": game["target_phrase"]})}\n\n\n"
+                obj = {
+                    "model_response": full_response,
+                    "game_state": state,
+                    "target_phrase": game['target_phrase'],
+                }
+                yield f"event: end\ndata: {json.dumps(obj)}\n\n\n"
+                # yield f"event: end\ndata: {json.dumps({"model_response" : full_response, "game_state" : state, "target_phrase": game["target_phrase"]})}\n\n\n"
                 
             except asyncio.CancelledError as error:
                 print(error)
                 print("Stream was cancelled")
-                yield f"event: end\ndata: {json.dumps({"model_response" : full_response, "game_state" : state, "target_phrase": game["target_phrase"]})}\n\n\n"
+                obj = {
+                    "model_response": full_response,
+                    "game_state": state,
+                    "target_phrase": game['target_phrase'],
+                }
+                yield f"event: end\ndata: {json.dumps(obj)}\n\n\n"
+                # yield f"event: end\ndata: {json.dumps({"model_response" : full_response, "game_state" : state, "target_phrase": game["target_phrase"]})}\n\n\n"
             finally:
                 game["chat_history"].append({"user": user_input, "model": full_response.strip()})
                 game["state"] = state
