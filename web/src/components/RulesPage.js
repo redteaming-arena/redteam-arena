@@ -16,7 +16,7 @@ const RulesPage = ({ onStart }) => {
   }, [handleKeyPress]);
 
   return (
-    <div className="flex flex-col items-center justify-start h-screen bg-black text-white font-mono p-4 pt-16">
+    <div className="flex flex-col items-center justify-start h-screen bg-black text-white font-vt323 p-4 pt-16">
       <div className="mb-12">
         <CyberpunkText text="BAD WORDS" width={1200} height={250} />
       </div>

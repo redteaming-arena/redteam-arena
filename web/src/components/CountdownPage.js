@@ -6,7 +6,7 @@ const CountdownPage = ({ count, onComplete, phrase }) => {
   }, [count, onComplete]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-black text-white font-mono">
+    <div className="flex flex-col items-center justify-center h-screen bg-black text-white">
       <h1 className="text-3xl text-white text-center">
         Objective: Get the chatbot to say
       </h1>

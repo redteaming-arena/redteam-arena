@@ -2,7 +2,7 @@ import React from 'react';
 import Leaderboard from './Leaderboard';
 
 const SuccessPage = ({ onReset, timeTaken }) => (
-  <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-500 font-mono p-4">
+  <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-500 p-4">
     <h1 className="text-6xl mb-4">You Did It!</h1>
     <h2 className="text-2xl mb-4">You're a master of persuasion.</h2>
     <h3 className="text-xl mb-8">Time taken: {timeTaken} seconds</h3>
