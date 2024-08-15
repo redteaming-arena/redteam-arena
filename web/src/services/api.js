@@ -22,12 +22,13 @@ const handleResponse = async (response) => {
   
 
 export const register = async (email, password) => {
-const response = await fetch(`${API_URL}/api/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-});
-return handleResponse(response);
+    const response = await fetch(`${API_URL}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+    });
+    console.log('Raw response:', response);
+    return handleResponse(response);
 };
 
 export const login = async (email, password) => {

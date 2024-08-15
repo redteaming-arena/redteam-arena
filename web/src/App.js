@@ -41,7 +41,7 @@ const App = () => {
   }, [page]);
 
   useEffect(() => {
-    setIsUserLoggedIn(isLoggedIn() && (getToken() != process.env.REACT_APP_DEV_LOGIN_TOKEN));
+    setIsUserLoggedIn(isLoggedIn() && (getToken() !== process.env.REACT_APP_DEV_LOGIN_TOKEN));
     setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
   }, []);  
 
@@ -74,18 +74,17 @@ const App = () => {
     setPage('success');
   };
 
-  const handleLogin = (username, password) => {
+  const handleLogin = async (username, password) => {
     try {
-      //const data = login(username, password)
-      //console.log(data.access_token)
-      //setToken(data.access_token); TODO: FIX THIS
-      setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
+      const data = await login(username, password)
+      console.log("LOGIN DATA", data);
+      setToken(data.access_token);
       setIsUserLoggedIn(true);
       setPage('rules');  
+      console.log("Finished setting page.", getToken())
     } catch (error) {
-      //const data = register(username, password);
-      //setToken(data.access_token); TODO: FIX THIS
-      setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
+      const data = await register(username, password);
+      setToken(data.access_token);
       setIsUserLoggedIn(true);
       setPage('rules');  
     }
@@ -93,8 +92,8 @@ const App = () => {
 
   const handleLogout = () => {
     removeToken()
+    setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN)
     setIsUserLoggedIn(false);
-    setPage('rules');
   };
 
   const showLoginPage = () => {
@@ -132,7 +131,7 @@ const App = () => {
         <CountdownPage 
           count={count}
           onComplete={startChat} 
-          phrase={currentPhrase} 
+          phrase={currentPhrase}
           onAbout={handleAbout}
           showAbout={showAbout} // Set to false to hide the About button
         />
