@@ -17,23 +17,28 @@ const RulesPage = ({ onStart, onLogin, onAbout, showAbout = false, buttonText })
   }, [handleKeyPress]);
 
   return (
-    <div className="flex flex-col items-center justify-start h-screen bg-black text-white font-mono p-4 pt-16 relative">
-      <div className="absolute top-4 right-4 flex gap-2">
+    <div className="flex flex-col items-center justify-between min-h-screen w-full bg-black text-white font-mono p-4">
+      <div className="w-full flex justify-end">
         <NavButton text={buttonText} onClick={onLogin} />
-        {showAbout && <NavButton text="ABOUT" onClick={onAbout} />}
+        {showAbout && <NavButton text="ABOUT" onClick={onAbout} className="ml-2" />}
       </div>
-      <div className="mb-12">
-        <CyberpunkText text="BAD WORDS" width={1200} height={250} />
+
+      <div className="flex flex-col items-center text-center w-full max-w-4xl mx-auto">
+        <div className="w-full mb-8">
+          <CyberpunkText text="BAD WORDS" />
+        </div>
+        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-4 sm:mb-8">YOU HAVE ONE MINUTE TO BREAK THE MODEL.</h1>
+        <h3 className="text-lg sm:text-xl md:text-2xl mb-8 sm:mb-12">THE FASTER, THE BETTER.</h3>
+        <NavButton
+          text="CLICK HERE OR PRESS SPACE TO BEGIN BREAKING"
+          onClick={onStart}
+          textSize="text-sm sm:text-base md:text-lg lg:text-xl"
+          padding="px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4"
+          className="font-bold"
+        />
       </div>
-      <h1 className="text-4xl mb-8">YOU HAVE ONE MINUTE TO BREAK THE MODEL.</h1>
-      <h3 className="text-2xl mb-12">THE FASTER, THE BETTER.</h3>
-      <NavButton 
-        text="CLICK HERE OR PRESS SPACE TO BEGIN BREAKING"
-        onClick={onStart}
-        textSize="text-xl"
-        padding="px-8 py-4"
-        className="font-bold"
-      />
+
+      <div></div> {/* Empty div for spacing */}
     </div>
   );
 };

@@ -111,11 +111,10 @@ const App = () => {
   const handleBack = () => {
     setPage('rules')
   }
-
   const showAbout = false;
 
   return (
-    <div className="h-screen bg-black">
+    <div className="bg-black h-screen w-screen">
       {page === 'rules' && (
         <RulesPage 
           onStart={startCountdown}
