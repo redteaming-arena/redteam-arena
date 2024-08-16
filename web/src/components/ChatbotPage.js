@@ -84,10 +84,7 @@ const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, onAbout, showAbou
               return updatedMessage;
             });
   
-            if (
-              phrase &&
-              currentStreamedMessageRef.current.toLowerCase().includes(phrase.toLowerCase())
-            ) {
+            if (data.game_state === "win") {
               onSuccess(60 - timeLeft);
               eventSourceRef.current.close();
             }
