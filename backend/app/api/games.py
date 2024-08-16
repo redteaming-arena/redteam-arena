@@ -1,7 +1,7 @@
 # app/api/games.py
 import asyncio
 import json
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from app.core.security import get_current_user
 from app.schemas.game import GameCreate, GameChat, GameState
@@ -13,6 +13,10 @@ import os
 from app.ai_models.openai_model import OpenAIModel
 from app.ai_models.anthropic_model import AnthropicModel
 from typing import AsyncGenerator
+import random
+from datetime import datetime
+import aiofiles
+import aiofiles.os
 
 import random
 
@@ -119,6 +123,45 @@ async def get_chat_history(
     return game["chat_history"]
     
 
+async def write_session_to_file(user_email: str, session_id: UUID, game_data: dict):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"db/json/{user_email}/{timestamp}_{session_id}.json"
+    
+    # Ensure the directory exists
+    directory = os.path.dirname(filename)
+    await aiofiles.os.makedirs(directory, exist_ok=True)
+    
+    # Write the game data to the file
+    async with aiofiles.open(filename, mode='w') as f:
+        await f.write(json.dumps(game_data, indent=2))
+    
+    logger.info(f"Game session written to file: {filename}")
+
+@router.post("/write_session")
+async def write_session(
+    session_id: UUID,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user)
+):
+    if session_id not in games_db:
+        raise HTTPException(status_code=404, detail="Game session not found")
+    game = games_db[session_id]
+    if game["user_email"] != current_user["email"]:
+        raise HTTPException(status_code=403, detail="Not authorized to access this game")
+    
+    # Prepare the game data to be written
+    game_data = {
+        "session_id": str(session_id),
+        "user_email": game["user_email"],
+        "state": game["state"],
+        "target_phrase": game["target_phrase"],
+        "chat_history": game["chat_history"]
+    }
+    
+    # Add the write operation as a background task
+    background_tasks.add_task(write_session_to_file, current_user["email"], session_id, game_data)
+    
+    return {"message": "Game session write operation scheduled"}
 
 @router.post("/test/chat")
 async def test_game_chat(

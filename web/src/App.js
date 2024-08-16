@@ -5,7 +5,7 @@ import ChatbotPage from './components/ChatbotPage';
 import FailurePage from './components/FailurePage';
 import SuccessPage from './components/SuccessPage';
 import LoginPage from './components/LoginPage';
-import { register, login, createGame, getAllUsers } from './services/api';
+import { register, login, createGame } from './services/api';
 import { removeToken, setToken, isLoggedIn } from './services/auth';
 
 

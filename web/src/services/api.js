@@ -175,12 +175,24 @@ const response = await fetch(`${API_URL}/api/game/history/${sessionId}`, {
 });
 return handleResponse(response);
 };
+
+export const writeSession = async (sessionId) => {
+  const response = await fetch(`${API_URL}/api/game/write_session`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getToken()}`
+    },
+    body: JSON.stringify({ session_id: sessionId })
+  });
+  return handleResponse(response)
+};
   
 export const getLeaderboard = async () => {
-const response = await fetch(`${API_URL}/api/leaderboard/get`, {
-headers: { 'Authorization': `Bearer ${getToken()}` },
-});
-return handleResponse(response);
+  const response = await fetch(`${API_URL}/api/leaderboard/get`, {
+  headers: { 'Authorization': `Bearer ${getToken()}` },
+  });
+  return handleResponse(response);
 };
 
 export const getAllUsers = async () => {
