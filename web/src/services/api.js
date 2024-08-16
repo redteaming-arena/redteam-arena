@@ -2,7 +2,9 @@
 
 import { getToken } from './auth';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
-const API_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000' ;
+// const API_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = 'https://api.redarena.ai';
+
 
 const handleResponse = async (response) => {
     const data = await response.json();

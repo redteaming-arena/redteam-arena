@@ -2,7 +2,7 @@
 
 import { getToken } from '../utils/auth';
 
-const API_URL = 'http://35.192.77.48:8000';
+const API_URL = 'http://api.redarena.ai/';
 
 const handleResponse = async (response) => {
     const data = await response.json();
