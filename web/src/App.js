@@ -5,11 +5,11 @@ import ChatbotPage from './components/ChatbotPage';
 import FailurePage from './components/FailurePage';
 import SuccessPage from './components/SuccessPage';
 import LoginPage from './components/LoginPage';
-import { register, login, createGame } from './services/api';
+import { register, login, createGame, writeSession } from './services/api';
 import { removeToken, setToken, isLoggedIn } from './services/auth';
 
 
-const TIMER_DURATION = 60; // 1 minute
+const TIMER_DURATION = 10; // 1 minute TODO: CHANGE.
 
 const App = () => {
   const [page, setPage] = useState('rules');
@@ -33,6 +33,7 @@ const App = () => {
         setTimeLeft((prevTime) => {
           if (prevTime > 0) return prevTime - 1;
           setPage('failure');
+          writeSession(sessionId)
           return 0;
         });
       }, 1000);
@@ -143,6 +144,7 @@ const App = () => {
           onSuccess={handleSuccess}
           phrase={currentPhrase}
           sessionId={sessionId}
+          timerDuration={TIMER_DURATION}
         />
       )}
       {page === 'failure' && (

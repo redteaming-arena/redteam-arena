@@ -139,29 +139,42 @@ async def write_session_to_file(user_email: str, session_id: UUID, game_data: di
 
 @router.post("/write_session")
 async def write_session(
-    session_id: UUID,
     background_tasks: BackgroundTasks,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    session_id: UUID = Query(..., description="The ID of the session to write")
 ):
+    print(f"Received write_session request for session_id: {session_id}")
+    print(f"Current user: {current_user}")
+
     if session_id not in games_db:
-        raise HTTPException(status_code=404, detail="Game session not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Game session {session_id} not found")
+
     game = games_db[session_id]
     if game["user_email"] != current_user["email"]:
-        raise HTTPException(status_code=403, detail="Not authorized to access this game")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this game")
     
-    # Prepare the game data to be written
-    game_data = {
-        "session_id": str(session_id),
-        "user_email": game["user_email"],
-        "state": game["state"],
-        "target_phrase": game["target_phrase"],
-        "chat_history": game["chat_history"]
-    }
-    
-    # Add the write operation as a background task
-    background_tasks.add_task(write_session_to_file, current_user["email"], session_id, game_data)
-    
-    return {"message": "Game session write operation scheduled"}
+    try:
+        # Prepare the game data to be written
+        game_data = {
+            "session_id": str(session_id),
+            "user_email": game["user_email"],
+            "state": game["state"],
+            "target_phrase": game["target_phrase"],
+            "chat_history": game["chat_history"]
+        }
+        
+        # Add the write operation as a background task
+        background_tasks.add_task(write_session_to_file, current_user["email"], session_id, game_data)
+        
+        return {
+            "message": "Game session write operation scheduled",
+            "session_id": str(session_id),
+            "user_email": current_user["email"],
+            "status": "pending"
+        }
+    except Exception as e:
+        print(f"Error in write_session: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred: {str(e)}")
 
 @router.post("/test/chat")
 async def test_game_chat(

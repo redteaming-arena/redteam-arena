@@ -3,7 +3,7 @@ import { gameStreamEvent, writeSession } from "../services/api";
 import SubmitIcon from "../assets/submit";
 
 
-const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, onAbout, showAbout = false }) => {
+const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, timerDuration, onAbout, showAbout = false }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -86,7 +86,7 @@ const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, onAbout, showAbou
   
             if (data.game_state === "win") {
               writeSession(sessionId)
-              onSuccess(60 - timeLeft);
+              onSuccess(timerDuration - timeLeft);
               eventSourceRef.current.close();
             }
           },

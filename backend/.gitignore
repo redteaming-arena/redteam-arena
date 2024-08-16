@@ -1,3 +1,4 @@
+db/
 .env
 .DS_STORE
 node_modules

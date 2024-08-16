@@ -176,15 +176,46 @@ return handleResponse(response);
 };
 
 export const writeSession = async (sessionId) => {
-  const response = await fetch(`${API_URL}/api/game/write_session`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getToken()}`
-    },
-    body: JSON.stringify({ session_id: sessionId })
-  });
-  return handleResponse(response)
+  console.log('Attempting to write session with ID:', sessionId);
+  try {
+    if (!sessionId) {
+      throw new Error('Session ID is required');
+    }
+
+    const url = new URL(`${API_URL}/api/game/write_session`);
+    url.searchParams.append('session_id', sessionId);
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getToken()}`
+      }
+      // Note: We're not sending a body anymore
+    });
+
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Server Error:', errorData);
+      throw new Error(JSON.stringify(errorData) || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Server response:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in writeSession:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    } else {
+      console.error('Unknown error:', error);
+    }
+    throw error;
+  }
 };
   
 export const getLeaderboard = async () => {
