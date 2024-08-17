@@ -19,6 +19,7 @@ const App = () => {
   const [currentPhrase, setCurrentPhrase] = useState(null);
   const [sessionId, setSessionId] = useState(null);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(isLoggedIn());
+  const [sessionWritten, setSessionWritten] = useState(false);
 
   useEffect(() => {
     if (page === 'countdown' && count > 0) {
@@ -33,13 +34,19 @@ const App = () => {
         setTimeLeft((prevTime) => {
           if (prevTime > 0) return prevTime - 1;
           setPage('failure');
-          writeSession(sessionId)
           return 0;
         });
       }, 1000);
       return () => clearInterval(timer);
     }
   }, [page]);
+
+  useEffect(() => {
+    if ((page === 'failure' || page === 'success') && !sessionWritten) {
+      writeSession(sessionId);
+      setSessionWritten(true);
+    }
+  }, [page, sessionId, sessionWritten]);
 
   useEffect(() => {
     setIsUserLoggedIn(false);
@@ -67,6 +74,7 @@ const App = () => {
   const restart = () => {
     setSuccessTime(null);
     setTimeLeft(TIMER_DURATION);
+    setSessionWritten(false);
     startCountdown()
   };
 

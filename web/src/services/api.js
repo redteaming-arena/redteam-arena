@@ -209,7 +209,6 @@ export const writeSession = async (sessionId) => {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${getToken()}`
       }
-      // Note: We're not sending a body anymore
     });
 
     console.log('Response status:', response.status);

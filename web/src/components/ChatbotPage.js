@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { gameStreamEvent, writeSession } from "../services/api";
+import { gameStreamEvent } from "../services/api";
 import SubmitIcon from "../assets/submit";
 
 
@@ -85,7 +85,6 @@ const ChatbotPage = ({ timeLeft, onSuccess, phrase, sessionId, timerDuration, on
             });
   
             if (data.game_state === "win") {
-              writeSession(sessionId)
               onSuccess(timerDuration - timeLeft);
               eventSourceRef.current.close();
             }
