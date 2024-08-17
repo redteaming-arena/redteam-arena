@@ -215,6 +215,13 @@ async def write_session_to_file(user_email: str, session_id: UUID, game_data: di
     async with aiofiles.open(filename, mode='w') as f:
         await f.write(json.dumps(game_data, indent=2))
     
+    # Remove it from main memory
+    if session_id in games_db:
+        del games_db[session_id]
+    else:
+        print(games_db)
+        logger.warning(f"Session {session_id} not found in games_db when attempting to delete")
+    
     logger.info(f"Game session written to file: {filename}")
     
     
@@ -256,10 +263,7 @@ async def write_session(
 
         # Add the write operation as a background task
         background_tasks.add_task(write_session_to_file, current_user["email"], session_id, game_data)
-
-        # Remove it from main memory
-        del games_db[session_id]
-
+        
         logger.info(f"Session {session_id} scheduled for writing and removed from memory")
 
         return {
