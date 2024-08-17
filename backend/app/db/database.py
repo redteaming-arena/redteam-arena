@@ -2,3 +2,4 @@
 
 users_db = {}
 games_db = {}
+score_db = {}

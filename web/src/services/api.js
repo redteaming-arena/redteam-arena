@@ -22,6 +22,24 @@ const handleResponse = async (response) => {
   };
   
 
+export const getLeaderboard = async () => {
+    const response = await fetch(`${API_URL}/api/game/leaderboard`, {
+      headers: { 'Authorization': `Bearer ${getToken()}` },
+    });
+    return handleResponse(response);
+  };
+  
+  export const handleLeaderboard = async () => {
+    try {
+      const leaderboardData = await getLeaderboard();
+      console.log('Leaderboard data fetched successfully:', leaderboardData);
+      return leaderboardData;
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      throw error;
+    }
+  };  
+
 export const register = async (email, password) => {
     const response = await fetch(`${API_URL}/api/register`, {
         method: 'POST',
@@ -218,12 +236,6 @@ export const writeSession = async (sessionId) => {
   }
 };
   
-export const getLeaderboard = async () => {
-  const response = await fetch(`${API_URL}/api/leaderboard/get`, {
-  headers: { 'Authorization': `Bearer ${getToken()}` },
-  });
-  return handleResponse(response);
-};
 
 export const getAllUsers = async () => {
 const response = await fetch(`${API_URL}/api/admin/users`, {

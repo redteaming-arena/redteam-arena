@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from app.core.security import create_access_token, verify_password, get_password_hash
 from app.schemas.user import UserCreate, Token
-from app.db.database import users_db
+from app.db.database import users_db, score_db
 import logging
 
 router = APIRouter()
@@ -39,6 +39,7 @@ async def register(user_data: UserCreate):
         "hashed_password": get_password_hash(user_data.password),
         "is_active": True
     }
+    score_db[user_data.email] = 0
     logger.info(f"New user registered: {user_data.email}")
     return {"message": "User created successfully"}
 

@@ -3,9 +3,10 @@ import asyncio
 import json
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
+from fastapi import status
 from app.core.security import get_current_user
 from app.schemas.game import GameCreate, GameChat, GameState
-from app.db.database import games_db
+from app.db.database import games_db, score_db
 from uuid import UUID, uuid4
 import logging
 from dotenv import load_dotenv
@@ -109,21 +110,102 @@ async def game_chat(
         logger.info(f"Chat in game {session_id} for user: {current_user['email']}, response: {response_data}")
         return response_data
 
+@router.get("/leaderboard")
+async def get_leaderboard(
+    current_user: dict = Depends(get_current_user),
+    top_n: int = Query(10, description="Number of top players to return"),
+    around_n: int = Query(5, description="Number of players to show around the current user")
+):
+    try:
+        # Sort users by score in descending order
+        sorted_users = sorted(score_db.items(), key=lambda x: x[1], reverse=True)
+        
+        # Find current user's position
+        user_email = current_user['email']
+        user_position = next((index for index, (email, _) in enumerate(sorted_users) if email == user_email), -1)
+        
+        if user_position == -1:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Current user not found in leaderboard")
+        
+        # Get top N users
+        top_users = [
+            {"position": i+1, "email": email, "score": score}
+            for i, (email, score) in enumerate(sorted_users[:top_n])
+        ]
+        
+        # Get users around the current user
+        start = max(0, user_position - around_n // 2)
+        end = min(len(sorted_users), start + around_n)
+        around_users = [
+            {"position": i+1, "email": email, "score": score}
+            for i, (email, score) in enumerate(sorted_users[start:end])
+        ]
+        
+        return {
+            "user_position": user_position + 1,
+            "user_score": score_db.get(user_email, 0),
+            "total_users": len(sorted_users),
+            "top_users": top_users,
+            "around_users": around_users
+        }
+    
+    except Exception as e:
+        logger.error(f"Error in get_leaderboard: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred: {str(e)}")
+
 # Add a new endpoint to get the chat history
 @router.get("/history/{session_id}", response_model=list)
 async def get_chat_history(
     session_id: UUID,
     current_user: dict = Depends(get_current_user)
 ):
-    if session_id not in games_db:
-        raise HTTPException(status_code=404, detail="Game session not found")
-    game = games_db[session_id]
-    if game["user_email"] != current_user["email"]:
-        raise HTTPException(status_code=403, detail="Not authorized to access this game")
-    return game["chat_history"]
+    UUID_LENGTH = 36
+    logger.info(f"{current_user["email"]} searches for session_id: {session_id}")
+    folder_name = f"db/json/{current_user['email']}"
+    session_id_str = str(session_id)
+
+    if not os.path.exists(folder_name):
+        raise HTTPException(status_code=404, detail="No chat history found for this user")
+
+    try:
+        matching_files = [f for f in os.listdir(folder_name) if session_id_str in f[-UUID_LENGTH:]]
+        
+        if not matching_files:
+            raise HTTPException(status_code=404, detail="Game session not found")
+        
+        
+        file_path = os.path.join(folder_name, matching_files[0])
+        
+        # Iterate over all files in the user's folder
+        async with aiofiles.open(file_path, mode='r') as f:
+            content = await f.read()
+            game_data = json.loads(content)
+            
+            # Check if the current user is authorized to access this game
+            if game_data["user_email"] != current_user["email"]:
+                raise HTTPException(status_code=403, detail="Not authorized to access this game")
+            
+            return game_data.get("chat_history", [])
+
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Error decoding game data")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
     
 
+def calculate_score(game_data: dict) -> int:
+    # Simple scoring system: 
+    # TODO: upgrade better point
+    # 10 points for winning, -5 for losing, 0 for ongoing
+    if game_data["state"] == GameState.win:
+        return 10
+    elif game_data["state"] == GameState.loss:
+        return -5
+    else:
+        return 0
+
 async def write_session_to_file(user_email: str, session_id: UUID, game_data: dict):
+    
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"db/json/{user_email}/{timestamp}_{session_id}.json"
     
@@ -136,6 +218,8 @@ async def write_session_to_file(user_email: str, session_id: UUID, game_data: di
         await f.write(json.dumps(game_data, indent=2))
     
     logger.info(f"Game session written to file: {filename}")
+    
+    
 
 @router.post("/write_session")
 async def write_session(
@@ -143,8 +227,8 @@ async def write_session(
     current_user: dict = Depends(get_current_user),
     session_id: UUID = Query(..., description="The ID of the session to write")
 ):
-    print(f"Received write_session request for session_id: {session_id}")
-    print(f"Current user: {current_user}")
+    logger.info(f"Received write_session request for session_id: {session_id}")
+    logger.info(f"Current user: {current_user['email']}")
 
     if session_id not in games_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Game session {session_id} not found")
@@ -152,93 +236,42 @@ async def write_session(
     game = games_db[session_id]
     if game["user_email"] != current_user["email"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this game")
-    
+
     try:
+        # Calculate score
+        score = calculate_score(game)
+
+        # Update score_db
+        user_email = game["user_email"]
+        score_db[user_email] += score
+
         # Prepare the game data to be written
         game_data = {
             "session_id": str(session_id),
             "user_email": game["user_email"],
             "state": game["state"],
             "target_phrase": game["target_phrase"],
-            "chat_history": game["chat_history"]
+            "chat_history": game["chat_history"],
+            "score": score
         }
-        
+
+
         # Add the write operation as a background task
         background_tasks.add_task(write_session_to_file, current_user["email"], session_id, game_data)
-        
+
+        # Remove it from main memory
+        del games_db[session_id]
+
+        logger.info(f"Session {session_id} scheduled for writing and removed from memory")
+
         return {
             "message": "Game session write operation scheduled",
             "session_id": str(session_id),
             "user_email": current_user["email"],
+            "score": score,
+            "total_score": score_db[user_email],
             "status": "pending"
         }
     except Exception as e:
-        print(f"Error in write_session: {str(e)}")
+        logger.error(f"Error in write_session: {str(e)}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"An error occurred: {str(e)}")
-
-@router.post("/test/chat")
-async def test_game_chat(
-    user_input: str = Query(..., description="The user's input message"),
-    stream: bool = Query(True, description="Whether to stream the response")
-):
-    async def event_generator():
-            game = {
-                "state": GameState.ongoing,
-                "target_phrase": "secret phrase",
-                "chat_history": []
-            }
-            responses = [
-                "Here’s why this happens: \n serves as an end-of-line identifier, so the parser treats everything up to the first \n as one block (event) and the subsequent \n as another block with empty data. When the frontend parses this, it essentially ignores the second event and appends an empty string to the existing text. Consequently, the line break is ignored, potentially disrupting the entire markdown rendering.",
-                "That's an interesting point you've made.",
-                "Let me process that for a moment.",
-                "I see what you're saying.",
-                "Here's what I think about that:",
-            ]
-            
-            
-            full_response = ""
-            try:
-                for i, chunk in enumerate(responses[0].split(" ")):
-                    full_response += chunk + " "
-                    state = game["state"]
-                        
-                    response_data = {
-                        "model_response": chunk + " ",
-                        "game_state": state,
-                        "target_phrase": game["target_phrase"]
-                    }
-                    
-                    if stream:
-                        yield f"event: message\ndata: {json.dumps(response_data)}\n\n"
-                    else:
-                        yield json.dumps(response_data)
-                    await asyncio.sleep(0.1)  # Allow other tasks to run
-                obj = {
-                    "model_response": full_response,
-                    "game_state": state,
-                    "target_phrase": game['target_phrase'],
-                }
-                yield f"event: end\ndata: {json.dumps(obj)}\n\n\n"
-                
-            except asyncio.CancelledError as error:
-                print(error)
-                print("Stream was cancelled")
-                obj = {
-                    "model_response": full_response,
-                    "game_state": state,
-                    "target_phrase": game['target_phrase'],
-                }
-                yield f"event: end\ndata: {json.dumps(obj)}\n\n\n"
-            finally:
-                game["chat_history"].append({"user": user_input, "model": full_response.strip()})
-                game["state"] = state
-                print("Stream ended")
-
-    if stream:
-        return StreamingResponse(
-            event_generator(),
-            media_type="text/event-stream"
-        )
-    else:
-        response = [chunk async for chunk in event_generator(user_input, stream=False)]
-        return json.loads(response[-1])  # Return the last chunk for non-streaming response
