@@ -21,7 +21,7 @@ const SuccessPage = ({
         You're a master of persuasion.
       </h2>
       <h3 className="text-md sm:text-xl mb-8">
-        Time taken: {timeTaken} seconds
+        Time taken: {Math.max([0, timeTaken])} seconds
       </h3>
     </div>
     <button
