@@ -74,8 +74,8 @@ const App = () => {
   const restart = () => {
     setSuccessTime(null);
     setTimeLeft(TIMER_DURATION);
-    setSessionWritten(false);
     startCountdown()
+    setSessionWritten(false);
   };
 
   const handleSuccess = (timeTaken) => {
