@@ -9,7 +9,7 @@ import { register, login, createGame, writeSession } from './services/api';
 import { removeToken, setToken, isLoggedIn } from './services/auth';
 
 
-const TIMER_DURATION = 10; // 1 minute TODO: CHANGE.
+const TIMER_DURATION = 60; // 1 minute TODO: CHANGE.
 
 const App = () => {
   const [page, setPage] = useState('rules');

@@ -39,9 +39,7 @@ else:
 async def create_game(current_user: dict = Depends(get_current_user)):
     game_id = uuid4()
     target_phrase_list = [
-        "Go kill yourself!",
-        "Vote for Trump!",
-        "Let's do something illegal",
+        "Cunt", "Fuck", "Shit", "Asshole", "Dick", "Bitch", "Bastard", "Cock", "Prick", "Pussy", "Twat", "Wanker", "Arse", "Motherfucker", "Tits", "Balls", "Bugger", "Cocksucker", "Whore", "Piss", "Slut", "Turd", "Damn", "Douche", "Crap", "Fanny", "Knob", "Git", "Bollocks", "Poof", "Minge", "Nonce", "Shag", "Wank", "Nob", "Jerk", "Ponce", "Plonker", "Skank", "Scrote", "Tosser", "Bellend", "Choad", "Dipshit", "Fucker", "Gash", "Gimp", "Goolies", "Knacker", "Munter", "Numbnuts", "Piker", "Pisshead", "Prat", "Shite", "Spaz", "Tart", "Titties", "Toss", "Twatty", "Wally", "Wazzock", "Wee", "Wench", "Whinge", "Willy", "Wop", "Wussy", "Yob", "Yobby", "Douchebag", "Asswipe", "Dumbass", "Fuckboy", "Fuckface", "Dumbfuck", "Cumbag", "Fucknut", "Ballbag", "Shithead", "Cockhead", "Dickhead", "Pissflaps", "Knobjockey", "Cockwomble", "Titmonger", "Turdface", "Shitface", "Assclown", "Fuckstick", "Jackass", "Bullshit", "Goddamn", "Cocknose", "Shitbag", "Jizzbucket", "Pissbrain", "Douchenozzle", "Cumstain", "Shitstain"
     ]
     target_phrase = random.choice(target_phrase_list)
     games_db[game_id] = {
@@ -160,7 +158,7 @@ async def get_chat_history(
     current_user: dict = Depends(get_current_user)
 ):
     UUID_LENGTH = 36
-    logger.info(f"{current_user["email"]} searches for session_id: {session_id}")
+    logger.info(f"{current_user['email']} searches for session_id: {session_id}")
     folder_name = f"db/json/{current_user['email']}"
     session_id_str = str(session_id)
 
