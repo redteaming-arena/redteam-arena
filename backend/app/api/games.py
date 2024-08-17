@@ -219,7 +219,6 @@ async def write_session_to_file(user_email: str, session_id: UUID, game_data: di
     if session_id in games_db:
         del games_db[session_id]
     else:
-        print(games_db)
         logger.warning(f"Session {session_id} not found in games_db when attempting to delete")
     
     logger.info(f"Game session written to file: {filename}")
