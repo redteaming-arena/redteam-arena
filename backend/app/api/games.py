@@ -37,6 +37,15 @@ elif AI_MODEL == "anthropic":
 else:
     raise ValueError(f"Unsupported AI model: {AI_MODEL}")
 
+def calculate_score(state) -> int:
+    # Simple scoring system: 
+    # TODO: upgrade better point
+    # 10 points for winning, -5 for losing, 0 for ongoing
+    if state == GameState.win:
+        return 10
+    else:
+        return 0
+
 @router.post("/create", response_model=GameCreate)
 async def create_game(current_user: dict = Depends(get_current_user)):
     game_id = uuid4()
@@ -48,7 +57,8 @@ async def create_game(current_user: dict = Depends(get_current_user)):
         "user_email": current_user,
         "state": GameState.ongoing,
         "target_phrase": target_phrase,
-        "chat_history": []
+        "chat_history": [],
+        "score" : 0
     }
     logger.info(f"New game created for user: {current_user}, session_id: {game_id}, target_phrase: {target_phrase}")
     return {"session_id": game_id, "target_phrase": target_phrase}
@@ -77,6 +87,7 @@ async def game_chat(
                     chunk_response += content
                     if game["target_phrase"].lower() in chunk_response.lower():
                         state = GameState.win
+                        game["score"] = calculate_score(state)
                     if stream:
                         yield f"event:message\ndata: {json.dumps({'model_response': chunk.choices[0].delta.content, 'game_state': state, 'target_phrase': game['target_phrase']})}\n\n"
             # End response
@@ -110,6 +121,7 @@ async def game_chat(
         logger.info(f"Chat in game {session_id} for user: {current_user}, response: {response_data}")
         return response_data
 
+
 @router.get("/leaderboard")
 async def get_leaderboard(
     current_user: dict = Depends(get_current_user),
@@ -142,6 +154,7 @@ async def get_leaderboard(
         ]
         
         return {
+            "user_email"  : current_user,
             "user_position": user_position + 1,
             "user_score": sorted_combined[user_position][1],
             "total_users": len(sorted_combined),
@@ -191,18 +204,6 @@ async def get_chat_history(
         raise HTTPException(status_code=500, detail="Error decoding game data")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
-    
-
-def calculate_score(game_data: dict) -> int:
-    # Simple scoring system: 
-    # TODO: upgrade better point
-    # 10 points for winning, -5 for losing, 0 for ongoing
-    if game_data["state"] == GameState.win:
-        return 10
-    elif game_data["state"] == GameState.loss:
-        return -5
-    else:
-        return 0
 
 async def write_session_to_file(user_email: str, session_id: UUID, game_data: dict):
     
@@ -245,7 +246,7 @@ async def write_session(
 
     try:
         # Calculate score
-        score = calculate_score(game)
+        score = game["score"]
 
         # Update score
         user_email = game["user_email"]
@@ -258,7 +259,7 @@ async def write_session(
         game_data = {
             "session_id": str(session_id),
             "user_email": game["user_email"],
-            "state": game["state"],
+            "state": game["state"] if GameState.win else GameState.loss,
             "target_phrase": game["target_phrase"],
             "chat_history": game["chat_history"],
             "score": score
@@ -272,10 +273,10 @@ async def write_session(
 
         return {
             "message": "Game session write operation scheduled",
-            "session_id": str(session_id),
             "user_email": current_user,
             "score": score,
             "total_score": new_score,
+            "state": game_data["state"],
             "status": "pending"
         }
     except Exception as e:
