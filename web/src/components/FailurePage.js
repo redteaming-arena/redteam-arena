@@ -24,7 +24,7 @@ const FailurePage = ({
     >
       TRY AGAIN
     </button>
-    <Leaderboard />
+    <Leaderboard borderColor={`border-red-600`} userColor={"bg-red-800"} />
   </div>
 );
 

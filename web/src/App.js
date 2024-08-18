@@ -7,6 +7,7 @@ import SuccessPage from './components/SuccessPage';
 import LoginPage from './components/LoginPage';
 import { register, login, createGame, writeSession } from './services/api';
 import { removeToken, setToken, isLoggedIn } from './services/auth';
+import LoadingScreen from './components/LoadingScreen';
 
 
 const TIMER_DURATION = 60; // 1 minute TODO: CHANGE.
@@ -33,7 +34,7 @@ const App = () => {
       const timer = setInterval(() => {
         setTimeLeft((prevTime) => {
           if (prevTime > 0) return prevTime - 1;
-          setPage('failure');
+          setPage('loading');
           return 0;
         });
       }, 1000);
@@ -42,8 +43,15 @@ const App = () => {
   }, [page]);
 
   useEffect(() => {
-    if ((page === 'failure' || page === 'success') && !sessionWritten) {
-      writeSession(sessionId);
+    if ((page === "loading") && !sessionWritten) {
+      const data = writeSession(sessionId);
+      data.then((res) => {
+        console.log(res)
+        setPage(res.state === "win" ? "success" : "failure")
+      }).catch((err) => {
+        console.error(err)
+      })
+      
       setSessionWritten(true);
     }
   }, [page]);
@@ -80,7 +88,7 @@ const App = () => {
 
   const handleSuccess = (timeTaken) => {
     setSuccessTime(timeTaken);
-    setPage('success');
+    setPage('loading');
   };
 
   const handleLogin = async (username, password) => {
@@ -177,6 +185,7 @@ const App = () => {
           buttonText={isUserLoggedIn ? "LOGOUT" : "LOGIN"}
         />
       )}
+      {page === "loading" && <LoadingScreen/>}
     </div>
   );
 };

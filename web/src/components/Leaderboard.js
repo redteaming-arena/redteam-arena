@@ -1,9 +1,13 @@
 // src/components/Leaderboard.js
 
-import React, { useState, useEffect } from 'react';
-import { handleLeaderboard } from '../services/api';
+import React, { useState, useEffect } from "react";
+import { handleLeaderboard } from "../services/api";
 
-const Leaderboard = () => {
+const Leaderboard = ({
+  userColor = "bg-green-700",
+  borderColor = "border-green-500",
+  textColor = "text-white",
+}) => {
   const [leaderboardData, setLeaderboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,8 +20,8 @@ const Leaderboard = () => {
         setLeaderboardData(data);
         setError(null);
       } catch (err) {
-        setError('Failed to fetch leaderboard data');
-        console.error('Error fetching leaderboard:', err);
+        setError("Failed to fetch leaderboard data");
+        console.error("Error fetching leaderboard:", err);
       } finally {
         setLoading(false);
       }
@@ -25,15 +29,17 @@ const Leaderboard = () => {
 
     fetchLeaderboard();
   }, []);
-  
-  if (loading) return <div className="text-center text-white">Loading leaderboard...</div>;
+
+  if (loading)
+    return <div className="text-center text-white">Loading leaderboard...</div>;
   if (error) return <div className="text-center text-red-500">{error}</div>;
   if (!leaderboardData) return null;
 
-  const { user_position, user_score, top_users, around_users } = leaderboardData;
-
+  const { user, user_position, user_score, top_users, around_users } =
+    leaderboardData;
+  console.log(around_users)
   return (
-    <div className="w-full max-w-md mx-auto text-white">
+    <div className={`w-full max-w-md mx-auto ${textColor}`}>
       <h2 className="text-2xl mb-4 text-center">Leaderboard</h2>
       <div className="mb-4 text-center">
         Your Position: {user_position} | Your Score: {user_score}
@@ -41,31 +47,60 @@ const Leaderboard = () => {
       <table className="w-full border-collapse">
         <thead>
           <tr>
-            <th className="border border-green-500 px-4 py-2">Rank</th>
-            <th className="border border-green-500 px-4 py-2">Email</th>
-            <th className="border border-green-500 px-4 py-2">Score</th>
+            <th className={`border ${borderColor} px-4 py-2`}>Rank</th>
+            <th className={`border ${borderColor} px-4 py-2`}>Email</th>
+            <th className={`border ${borderColor} px-4 py-2`}>Score</th>
           </tr>
         </thead>
         <tbody>
+        { user_position <= top_users.length && (<>
           {top_users.map((user) => (
-            <tr key={user.email} className={user.position === user_position ? 'bg-green-700' : ''}>
-              <td className="border border-green-500 px-4 py-2 text-center">{user.position}</td>
-              <td className="border border-green-500 px-4 py-2">{user.email}</td>
-              <td className="border border-green-500 px-4 py-2 text-right">{user.score}</td>
+            <tr
+              key={user.email}
+              className={user.position === user_position ? userColor : ""}
+            >
+              <td className={`border ${borderColor} px-4 py-2 text-center`}>
+                {user.position}
+              </td>
+              <td className={`border ${borderColor} px-4 py-2`}>
+                {user.email}
+              </td>
+              <td className={`border ${borderColor} px-4 py-2 text-right`}>
+                {user.score}
+              </td>
             </tr>
           ))}
+        </>) }
+         
           {user_position > top_users.length && (
             <>
-              <tr>
-                <td colSpan="3" className="border border-green-500 px-4 py-2 text-center">...</td>
-              </tr>
-              {around_users.map((user) => (
-                <tr key={user.email} className={user.position === user_position ? 'bg-green-700' : ''}>
-                  <td className="border border-green-500 px-4 py-2 text-center">{user.position}</td>
-                  <td className="border border-green-500 px-4 py-2">{user.email}</td>
-                  <td className="border border-green-500 px-4 py-2 text-right">{user.score}</td>
+              {top_users.map((user) => (
+                <tr
+                  key={user.email}
+                  className={user.position === user_position ? userColor : ""}
+                >
+                  <td className={`border ${borderColor} px-4 py-2 text-center`}>
+                    {user.position}
+                  </td>
+                  <td className={`border ${borderColor} px-4 py-2`}>
+                    {user.email}
+                  </td>
+                  <td className={`border ${borderColor} px-4 py-2 text-right`}>
+                    {user.score}
+                  </td>
                 </tr>
               ))}
+              <tr className={userColor}>
+                <td className={`border ${borderColor} px-4 py-2 text-center`}>
+                  {user_position}
+                </td>
+                <td className={`border ${borderColor} px-4 py-2`}>
+                  {user}
+                </td>
+                <td className={`border ${borderColor} px-4 py-2 text-right`}>
+                  {user_score}
+                </td>
+              </tr>
             </>
           )}
         </tbody>
