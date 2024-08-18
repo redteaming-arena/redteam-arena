@@ -46,7 +46,7 @@ const App = () => {
       writeSession(sessionId);
       setSessionWritten(true);
     }
-  }, [page, sessionId, sessionWritten]);
+  }, [page]);
 
   useEffect(() => {
     setIsUserLoggedIn(false);
