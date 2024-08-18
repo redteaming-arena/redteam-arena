@@ -6,7 +6,9 @@ from fastapi.responses import StreamingResponse
 from fastapi import status
 from app.core.security import get_current_user
 from app.schemas.game import GameCreate, GameChat, GameState
-from app.db.database import games_db, score_db
+from app.db.database import games_db
+from app.api.auth import get_users_list
+from app.core.utils import DB_DIR, load_txt, save_txt
 from uuid import UUID, uuid4
 import logging
 from dotenv import load_dotenv
@@ -43,12 +45,12 @@ async def create_game(current_user: dict = Depends(get_current_user)):
     ]
     target_phrase = random.choice(target_phrase_list)
     games_db[game_id] = {
-        "user_email": current_user["email"],
+        "user_email": current_user,
         "state": GameState.ongoing,
         "target_phrase": target_phrase,
         "chat_history": []
     }
-    logger.info(f"New game created for user: {current_user['email']}, session_id: {game_id}, target_phrase: {target_phrase}")
+    logger.info(f"New game created for user: {current_user}, session_id: {game_id}, target_phrase: {target_phrase}")
     return {"session_id": game_id, "target_phrase": target_phrase}
 
 
@@ -62,7 +64,7 @@ async def game_chat(
     if session_id not in games_db:
         raise HTTPException(status_code=404, detail="Game session not found")
     game = games_db[session_id]
-    if game["user_email"] != current_user["email"]:
+    if game["user_email"] != current_user:
         raise HTTPException(status_code=403, detail="Not authorized to access this game")
 
     async def generate_response() -> AsyncGenerator[str, None]:
@@ -105,7 +107,7 @@ async def game_chat(
             "chat_history": game["chat_history"],
             "target_phrase": game["target_phrase"]
         }
-        logger.info(f"Chat in game {session_id} for user: {current_user['email']}, response: {response_data}")
+        logger.info(f"Chat in game {session_id} for user: {current_user}, response: {response_data}")
         return response_data
 
 @router.get("/leaderboard")
@@ -116,11 +118,11 @@ async def get_leaderboard(
 ):
     try:
         # Sort users by score in descending order
-        sorted_users = sorted(score_db.items(), key=lambda x: x[1], reverse=True)
+        users, scores = get_users_list(return_scores=True)
+        sorted_combined = sorted(list(zip(users, scores)), key=lambda x: x[1], reverse=True)
         
         # Find current user's position
-        user_email = current_user['email']
-        user_position = next((index for index, (email, _) in enumerate(sorted_users) if email == user_email), -1)
+        user_position = next((index for index, (email, _) in enumerate(sorted_combined) if email == current_user), -1)
         
         if user_position == -1:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Current user not found in leaderboard")
@@ -128,21 +130,21 @@ async def get_leaderboard(
         # Get top N users
         top_users = [
             {"position": i+1, "email": email, "score": score}
-            for i, (email, score) in enumerate(sorted_users[:top_n])
+            for i, (email, score) in enumerate(sorted_combined[:top_n])
         ]
         
         # Get users around the current user
         start = max(0, user_position - around_n // 2)
-        end = min(len(sorted_users), start + around_n)
+        end = min(len(sorted_combined), start + around_n)
         around_users = [
             {"position": i+1, "email": email, "score": score}
-            for i, (email, score) in enumerate(sorted_users[start:end])
+            for i, (email, score) in enumerate(sorted_combined[start:end])
         ]
         
         return {
             "user_position": user_position + 1,
-            "user_score": score_db.get(user_email, 0),
-            "total_users": len(sorted_users),
+            "user_score": sorted_combined[user_position][1],
+            "total_users": len(sorted_combined),
             "top_users": top_users,
             "around_users": around_users
         }
@@ -158,8 +160,8 @@ async def get_chat_history(
     current_user: dict = Depends(get_current_user)
 ):
     UUID_LENGTH = 36
-    logger.info(f"{current_user['email']} searches for session_id: {session_id}")
-    folder_name = f"db/json/{current_user['email']}"
+    logger.info(f"{current_user} searches for session_id: {session_id}")
+    folder_name = f"db/json/{current_user}"
     session_id_str = str(session_id)
 
     if not os.path.exists(folder_name):
@@ -180,7 +182,7 @@ async def get_chat_history(
             game_data = json.loads(content)
             
             # Check if the current user is authorized to access this game
-            if game_data["user_email"] != current_user["email"]:
+            if game_data["user_email"] != current_user:
                 raise HTTPException(status_code=403, detail="Not authorized to access this game")
             
             return game_data.get("chat_history", [])
@@ -232,22 +234,25 @@ async def write_session(
     session_id: UUID = Query(..., description="The ID of the session to write")
 ):
     logger.info(f"Received write_session request for session_id: {session_id}")
-    logger.info(f"Current user: {current_user['email']}")
+    logger.info(f"Current user: {current_user}")
 
     if session_id not in games_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Game session {session_id} not found")
 
     game = games_db[session_id]
-    if game["user_email"] != current_user["email"]:
+    if game["user_email"] != current_user:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this game")
 
     try:
         # Calculate score
         score = calculate_score(game)
 
-        # Update score_db
+        # Update score
         user_email = game["user_email"]
-        score_db[user_email] += score
+        score_filepath = os.path.join(DB_DIR, user_email, "score.txt")
+        prev_score = float(load_txt(score_filepath))
+        new_score = prev_score + score
+        save_txt(score_filepath, str(new_score))
 
         # Prepare the game data to be written
         game_data = {
@@ -261,16 +266,16 @@ async def write_session(
 
 
         # Add the write operation as a background task
-        background_tasks.add_task(write_session_to_file, current_user["email"], session_id, game_data)
+        background_tasks.add_task(write_session_to_file, current_user, session_id, game_data)
         
         logger.info(f"Session {session_id} scheduled for writing and removed from memory")
 
         return {
             "message": "Game session write operation scheduled",
             "session_id": str(session_id),
-            "user_email": current_user["email"],
+            "user_email": current_user,
             "score": score,
-            "total_score": score_db[user_email],
+            "total_score": new_score,
             "status": "pending"
         }
     except Exception as e:

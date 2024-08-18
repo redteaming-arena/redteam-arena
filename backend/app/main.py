@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, games, users, admin
+from app.api import auth, games, users
 from app.core.config import settings
 
 app = FastAPI(title=settings.PROJECT_NAME)
@@ -20,7 +20,6 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(games.router, prefix="/api/game", tags=["game"])
 app.include_router(users.router, prefix="/api/user", tags=["users"])
-app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
 if __name__ == "__main__":
     import uvicorn
