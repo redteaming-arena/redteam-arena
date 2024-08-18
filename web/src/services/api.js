@@ -57,20 +57,59 @@ export const login = async (email, password) => {
   
     const response = await fetch(`${API_URL}/api/login`, {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        'username': email,
+        'password': password,
+      }),
     });
-    return handleResponse(response);
+      return handleResponse(response);
 };
   
 export const createGame = async () => {
+  const token = getToken();
+  console.log("Token:", token);
+  
+  if (!token) {
+    throw new Error('No authentication token available');
+  }
+
+  try {
     const response = await fetch(`${API_URL}/api/game/create`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${getToken()}`,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
     });
-    return handleResponse(response);
-  };
+
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers));
+
+    const text = await response.text();
+    console.log('Response text:', text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error('Error parsing JSON:', e);
+      throw new Error('Invalid JSON response');
+    }
+
+    if (!response.ok) {
+      console.error('Error response:', data);
+      throw new Error(data.detail || 'Failed to create game');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in createGame:', error);
+    throw error;
+  }
+};
 
 export const gameChat = async (sessionId, userInput) => {
 const response = await fetch(`${API_URL}/api/game/chat?session_id=${sessionId}&user_input=${encodeURIComponent(userInput)}`, {

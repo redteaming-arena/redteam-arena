@@ -85,11 +85,14 @@ const App = () => {
 
   const handleLogin = async (username, password) => {
     try {
+      console.log(username, password)
       const data = await login(username, password);
+      console.log(data.access_token)
       setToken(data.access_token);
       setIsUserLoggedIn(true);
       setPage('rules');
     } catch (loginError) {
+      console.log(loginError)
       try {
           await register(username, password);
           const data = await login(username, password)

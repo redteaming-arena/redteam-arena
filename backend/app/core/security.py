@@ -1,12 +1,21 @@
 # app/core/security.py
-
+import os, json
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from app.core.config import settings
-from app.db.database import users_db
+from app.core.utils import USERS_FILE, load_json
+
+# File paths
+USERS_FILE = "db/json/users.json"
+
+def load_json(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "r") as f:
+            return json.load(f)
+    return {}
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -37,6 +46,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    if email not in users_db:
+    users = load_json(USERS_FILE)
+    if email not in users:
         raise credentials_exception
-    return users_db[email]
+    return users[email]
