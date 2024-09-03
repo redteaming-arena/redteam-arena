@@ -1,4 +1,3 @@
-db/
 .env
 .DS_STORE
 node_modules
@@ -39,4 +38,3 @@ packages/react-devtools-fusebox/dist
 packages/react-devtools-inline/dist
 packages/react-devtools-shell/dist
 packages/react-devtools-timeline/dist
-.*
