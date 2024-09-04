@@ -14,11 +14,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { handleLogout } from "@/services/auth"
+import { getCookie } from "cookies-next"
 import { useRouter } from "next/navigation"
 
 export function DropdownAvatar({children} : {children : React.ReactNode}) {
     const router = useRouter()
-    const hamdleLogoutRefresh = async () => {
+    
+    const handleProfile = () => {
+      router.push("/profile")
+    }
+    
+    const handleLogoutRefresh = async () => {
         const res = await handleLogout()
         console.log(res)
         if (res.success) {
@@ -32,18 +38,16 @@ export function DropdownAvatar({children} : {children : React.ReactNode}) {
         {children}
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuLabel>Account</DropdownMenuLabel>
+        {/* <DropdownMenuSeparator /> */}
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            Profile
-            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+          <DropdownMenuItem onClick={handleProfile}>
+            {getCookie("username")}
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={hamdleLogoutRefresh}>
+        <DropdownMenuItem onClick={handleLogoutRefresh}>
           Log out
-          <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

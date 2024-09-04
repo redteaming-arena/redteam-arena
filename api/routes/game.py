@@ -1,5 +1,5 @@
 import os
-import asyncio
+import re
 import json
 import logging
 from uuid import uuid4, UUID
@@ -93,6 +93,8 @@ async def create_game_session(
 
     session = db.query(GameSession).filter(GameSession.user_id == current_user.id, 
                                            GameSession.state == GameState.PLAYING).first()
+    
+    # return session before there done
     if session:
         return f"/c/{session.session_id}"
     
@@ -113,6 +115,27 @@ async def create_game_session(
 
     # Redirect to the load game endpoint
     return f"/c/{session_id}"
+
+@router.post("/session/forfeit")
+async def forfeit_game_session(
+    session_id : UUID,
+    user : User=Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> RedirectResponse:
+    
+    """ Create a single session ID for a game and redirect to load the game """
+    session = db.query(GameSession).filter(GameSession.session_id == str(session_id)).first()
+    if session is None:
+        raise HTTPException(status_code=404, detail="Game session not found")
+
+    if session.user_id != user.id:
+        raise HTTPException(status_code=401, detail="Unauthorized session deletion")
+
+    db.delete(session)
+    db.commit()
+
+    # Redirect to the load game endpoint
+    return { "message" : "session deleted successful", "success" : True}
 
 @router.delete("/session")
 async def delete_game_session(
@@ -135,14 +158,29 @@ async def delete_game_session(
     return { "message" : "session deleted successful", "success" : True}
 
 
-
 @router.post("/share")
-async def post_shared_game(request : Request, 
-                     /,
-                     current_user : User=Depends(get_current_user)):
+async def post_shared_game(
+    request: Request,
+    session_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """ post game session """
-    print(request)
-    return None
+    session = db.query(GameSession).filter(
+        GameSession.session_id == str(session_id),
+        GameSession.user_id == current_user.id,
+        GameSession.state == GameState.PLAYING
+    ).first()
+    
+    if session is None:
+        raise HTTPException(status_code=404, detail="Game session not found")
+    
+    # Update the session to mark it as shared
+    session.share = not session.share
+    print()
+    db.commit()
+    
+    return {"message": "Game session shared successfully", "url": f"{os.getenv("BASE_URL", "http://localhost:3000")}/s/{str(session_id)}", "session" : session.__dict__}
 
 @router.get("/share")
 async def get_shared_game(session_id : UUID, request : Request, /):
@@ -150,68 +188,61 @@ async def get_shared_game(session_id : UUID, request : Request, /):
     print(request)
     return None
 
+@router.post("/chat")
+async def game_chat(
+    session_id: UUID = Query(..., description="The game session ID"),
+    user_input: str = Query(..., description="The user's input message"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
 
 
-
-# @router.post("/create", response_model=GameCreate)
-# async def create_game(current_user: dict = Depends(get_current_user)):
-#     logger.info("Create game.")
-#     game_id = uuid4()
-#     target_phrase_list = [
-#         "Cunt", "Fuck", "Shit", "Asshole", "Dick", "Bitch", "Bastard", "Cock", "Prick", "Pussy", "Twat", "Wanker", "Arse", "Motherfucker", "Tits", "Balls", "Bugger", "Cocksucker", "Whore", "Piss", "Slut", "Turd", "Damn", "Douche", "Crap", "Fanny", "Knob", "Git", "Bollocks", "Poof", "Minge", "Nonce", "Shag", "Wank", "Nob", "Jerk", "Ponce", "Plonker", "Skank", "Scrote", "Tosser", "Bellend", "Choad", "Dipshit", "Fucker", "Gash", "Gimp", "Goolies", "Knacker", "Munter", "Numbnuts", "Piker", "Pisshead", "Prat", "Shite", "Spaz", "Tart", "Titties", "Toss", "Twatty", "Wally", "Wazzock", "Wee", "Wench", "Whinge", "Willy", "Wop", "Wussy", "Yob", "Yobby", "Douchebag", "Asswipe", "Dumbass", "Fuckboy", "Fuckface", "Dumbfuck", "Cumbag", "Fucknut", "Ballbag", "Shithead", "Cockhead", "Dickhead", "Pissflaps", "Knobjockey", "Cockwomble", "Titmonger", "Turdface", "Shitface", "Assclown", "Fuckstick", "Jackass", "Bullshit", "Goddamn", "Cocknose", "Shitbag", "Jizzbucket", "Pissbrain", "Douchenozzle", "Cumstain", "Shitstain"
-#     ]
-#     target_phrase = random.choice(target_phrase_list)
-#     games_db[game_id] = {
-#         "username": current_user,
-#         "state": GameState.ongoing,
-#         "target_phrase": target_phrase,
-#         "chat_history": [],
-#         "score" : 0
-#     }
-#     logger.info(f"New game created for user: {current_user}, session_id: {game_id}, target_phrase: {target_phrase}")
-#     return {"session_id": game_id, "target_phrase": target_phrase}
-
-
-# @router.post("/chat")
-# async def game_chat(
-#     session_id: UUID = Query(..., description="The game session ID"),
-#     user_input: str = Query(..., description="The user's input message"),
-#     current_user: dict = Depends(get_current_user),
-# ):
-#     if session_id not in games_db:
-#         raise HTTPException(status_code=404, detail="Game session not found")
-#     game = games_db[session_id]
-#     if game["username"] != current_user:
-#         raise HTTPException(status_code=403, detail="Not authorized to access this game")
-
-#     async def generate_response() -> AsyncGenerator[str, None]:
-#         try:
-#             chunk_response = ""
-#             state = GameState.ongoing
-#             for chunk in ai_model.generate_response(game["chat_history"], user_input):
-#                 if chunk:
-#                     chunk_response += chunk
-#                     if game["target_phrase"].lower() in chunk_response.lower():
-#                         state = GameState.win
-#                         game["score"] = calculate_score(state)
-                    
-#                     yield f"event:message\ndata: {json.dumps({'response': chunk, 'game_state': state, 'target_phrase': game['target_phrase']})}\n\n"
-#             # End response
-#             game["state"] = state
-#             yield f'event:end\ndata: {json.dumps({"response": chunk_response, "game_state": game["state"], "target_phrase": game["target_phrase"]})}\n\n'
+    async def generate_response() -> AsyncGenerator[str, None]:
+        
+        session = db.query(GameSession).filter(
+            # GameSession.session_id == session_id,
+            GameSession.user_id == current_user.id,
+            GameSession.state == GameState.PLAYING
+        ).first()
+        
+        print(session.history)
+        
+        if session is None:
+            raise HTTPException(status_code=404, detail="Game session not found")
+        
+        try:
+            chunk_response = ""
+            state = GameState.PLAYING
+            for chunk in ai_model.generate_response(session.history, user_input):
+                if chunk:
+                    chunk_response += chunk
+                    if re.search(session.target_phrase, chunk_response, re.IGNORECASE):
+                        state = GameState.WIN
+                        session.score = 10  # CHANGE LATER
+                    yield f"event:message\ndata: {json.dumps({'response': chunk, 'game_state': str(state), 'target_phrase': session.target_phrase})}\n\n"
             
-#             # Update game state and chat history after streaming
-#             game["chat_history"].append({"role": "assistant", "content": chunk_response})
-#         except Exception as e:
-#             logger.error(f"Error calling AI API: {str(e)}")
-#             obj = {
-#                 "response": "I'm sorry, I'm having trouble responding right now.",
-#                 "game_state": game['state'],
-#                 "target_phrase": game['target_phrase'],
-#             }
-#             yield f"event:end\ndata: {json.dumps(obj)}\n\n"
+            # Finalize the session state if changed
+            if session.state != state:
+                session.state = state
+            
+            session.history.append({"role": "assistant", "content": chunk_response})
+            print(session.history)
+            db.commit()
+            
+            yield f'event:end\ndata: {json.dumps({"response": chunk_response, "game_state": str(state), "target_phrase": session.target_phrase})}\n\n'
+            
+        except Exception as e:
+            logger.error(f"Error in game chat: {str(e)}")
+            obj = {
+                "response": "I'm sorry, I'm having trouble responding right now.",
+                "game_state": str(session.state),
+            }
+            yield f"event:end\ndata: {json.dumps(obj)}\n\n"
+            db.rollback()
+        finally:
+            db.close()
 
-#     return StreamingResponse(generate_response(), media_type="text/event-stream")
+    return StreamingResponse(generate_response(), media_type="text/event-stream")
 
 # @router.post("/share/{session_id}")
 # async def mark_session_as_shared(

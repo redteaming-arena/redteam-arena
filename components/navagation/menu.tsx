@@ -23,10 +23,9 @@ const components: { title: string | any; href: string; description: string }[] =
       "Have a browse of the current game selection.",
   },
   {
-    title: <>Create Games  <span className="inline-flex items-center px-2 py-1 text-sm font-medium text-blue-50 bg-blue-800 rounded-full shadow-2xl border border-blue-700 
-                 bg-gradient-to-r from-blue-700 via-blue-800 to-blue-900
-                 hover:bg-gradient-to-r hover:from-blue-800 hover:via-blue-900 hover:to-blue-950 
-                 transition-all duration-300 ease-in-out">
+    title: <>Create Games  <span className="
+    mr-3 text-xl 2xl:text-2xl inline-block -skew-x-12 rounded-lg border border-gray-200 bg-gradient-to-br from-blue-300 via-blue-200 to-blue-100 px-2 py-[.08rem] !text-sm font-bold dark:text-blue-50 shadow-lg shadow-green-500/10 dark:from-blue-700 dark:via-blue-700 dark:to-blue-600 
+   ">
     Blue-Team
 </span>
 </>,

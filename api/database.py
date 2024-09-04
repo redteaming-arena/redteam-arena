@@ -25,6 +25,9 @@ class GameState(enum.Enum):
     LOSS = "loss"
     FORFEITED = "forfeited"
     PLAYING = "playing"
+    
+    def __str__(self):
+        return str(self.value)
 
 class TemporaryRegistration(Base):
     __tablename__ = "temporary_registrations"

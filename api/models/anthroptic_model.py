@@ -8,7 +8,6 @@ class AnthropicClient:
 
     def generate(self, messages: List[Dict], content: str) -> Iterable:
         messages.append({"role": "user", "content": content})
-        print(messages)
         stream = self.client.messages.create(
             messages=messages,
             model=self._model_name,

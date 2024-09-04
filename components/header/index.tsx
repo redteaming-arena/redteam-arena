@@ -8,12 +8,14 @@ import { Cross1Icon, HamburgerMenuIcon } from "@radix-ui/react-icons";
 import { cn } from "@/lib/utils";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import { getCookie } from "cookies-next";
+import { DropdownAvatar } from "../dropdown/user";
+import { Button } from "../ui/button";
 
-function MobileHeader({ isLoggedIn = false }) {
+function MobileHeader({ visible = false, isLoggedIn = false }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className={cn(" fixed w-full z-20 ", )}>
+    <div className={cn(" fixed w-full z-20 bg-black",)}>
       {/* Conditional Gradient background */}
       {isMenuOpen && (
         <div className="absolute inset-0 bg-opacity-90 h-screen z-10">
@@ -40,12 +42,16 @@ function MobileHeader({ isLoggedIn = false }) {
                 Sign in
               </Link>
             ) : (
-              <Link href="/profile" className="block text-center ml-2 mt-4">
-                <Avatar>
-                <AvatarImage src={`/api/user/icon/${getCookie("username")}`}></AvatarImage>
-                <AvatarFallback className="z-10 shadow-lg">{getCookie("username")?.slice(0, 2) || "0x"}</AvatarFallback>
-                </Avatar>
-              </Link>
+
+              <div className="flex flex-col w-full p-1 gap-x-1">
+                <h1 className="px-3 w-full bg-gradient-to-r from-black via-black/50 to-transparent rounded-xl">Account</h1>
+                <Button className="w-full" variant="link">
+                  {getCookie("username")}
+                </Button>
+                <Button className="w-full" variant="outline">
+                  Log out
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -112,12 +118,12 @@ export default function Header({}) {
         </Link>
       )}
       {loggedIn && (
-        <Link href={"/profile"}>
-          <Avatar>
-            <AvatarImage src={`/api/user/icon/${getCookie("username")}`}></AvatarImage>
+        <DropdownAvatar>
+          <Avatar className="p-2  border-[1px]">
+            <AvatarImage src={`/api/user/icon/${getCookie("username")} `}></AvatarImage>
             <AvatarFallback className="z-10 shadow-lg">{getCookie("username")?.slice(0, 2) || "0x"}</AvatarFallback>
           </Avatar>
-        </Link>
+        </DropdownAvatar>
       )}
     </div>
   );
