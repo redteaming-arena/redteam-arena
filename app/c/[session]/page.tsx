@@ -10,7 +10,6 @@ export default async function Chat({params} : { params : any, searchParams : any
     const {session} : { session : string } = params;
 
     if (session.match(UUID_RE) === null){
-        console.log(session, session.match(UUID_RE))
         redirect("/error")
     }
 
