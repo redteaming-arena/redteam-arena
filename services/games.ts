@@ -2,22 +2,7 @@
 import { apiCall, ApiResponse } from './utils';
 import { getCookie } from 'cookies-next';
 import { cookies } from 'next/headers';
-
-interface Game{
-    id : number;
-    title : string;
-    description : string;
-    genre : string;
-    difficulty : number;
-    wins: number;
-    losses : number;
-    total_tokens_used : number;
-    example : string | undefined;
-    release_date: string;
-    publisher : string;
-    created_at : string;
-    target_phase : string
-}
+import {Game} from '@/data/games';
 
 export async function games_list(): Promise<ApiResponse<Game[]>> {
     return apiCall<any>(
@@ -76,5 +61,4 @@ export async function games_list(): Promise<ApiResponse<Game[]>> {
       return { success : false, message : "Error creating game session", data : "/error" }
     }
   }
-
 

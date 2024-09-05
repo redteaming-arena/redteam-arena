@@ -1,129 +1,125 @@
 "use client";
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import NavigationLogo from "../logo/navigation-logo";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Navigation } from "../navagation/menu";
-import { Cross1Icon, HamburgerMenuIcon } from "@radix-ui/react-icons";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { cn } from "@/lib/utils";
-import { AvatarImage } from "@radix-ui/react-avatar";
-import { getCookie } from "cookies-next";
-import { DropdownAvatar } from "../dropdown/user";
+import { getCookie, setCookie } from "cookies-next";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 
-function MobileHeader({ visible = false, isLoggedIn = false }) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const pageOptions = [
+  { name: "Leaderboard", href: "/leaderboard" },
+  { name: "Games", href: "/games" },
+];
+
+function LoginForm({ onClose, onLogin }) {
+  const [username, setUsername] = useState("Joe Smoe");
+  const [password, setPassword] = useState("12345");
+  const formRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (formRef.current && !formRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onLogin(username);
+    setCookie("ra_token_verification", "dummy_token");
+    setCookie("username", username);
+    onClose();
+  };
 
   return (
-    <div className={cn(" fixed w-full z-20 bg-black",)}>
-      {/* Conditional Gradient background */}
-      {isMenuOpen && (
-        <div className="absolute inset-0 bg-opacity-90 h-screen z-10">
-          <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black/50 z-20 backdrop-blur-lg"></div>
-        </div>
-      )}
-
-      <div className="flex justify-between items-center px-4 py-2 relative z-10">
-        <NavigationLogo />
-        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2">
-          {isMenuOpen ? <Cross1Icon className="h-5 w-5" /> : <HamburgerMenuIcon className="h-5 w-5" />}
-        </button>
-      </div>
-
-      {isMenuOpen && (
-        <div className="px-4 py-2 relative z-10">
-          <Navigation />
-          <div className="w-full">
-            {!isLoggedIn ? (
-              <Link
-                href="/login"
-                className="block text-center text-white px-2 py-1 rounded-lg"
-              >
-                Login
-              </Link>
-            ) : (
-
-              <div className="flex flex-col w-full p-1 gap-x-1">
-                <h1 className="px-3 w-full bg-gradient-to-r from-black via-black/50 to-transparent rounded-xl">Account</h1>
-                <Button className="w-full" variant="link">
-                  {getCookie("username")}
-                </Button>
-                <Button className="w-full" variant="outline">
-                  Log out
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
+    <form onSubmit={handleSubmit} ref={formRef} className="flex items-center space-x-2 bg-zinc-800 p-2 rounded-lg">
+      <Input
+        type="text"
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        className="w-32"
+      />
+      <Input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="w-32"
+      />
+      <Button type="submit" className="bg-zinc-700">Login</Button>
+      <Button onClick={onClose} className="bg-zinc-700">Close</Button>
+    </form>
   );
 }
 
-
-export default function Header({}) {
-
-  const [isMobile, setIsMobile] = useState(false);
+export default function Header() {
   const [visible, setVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [isLoginExpanded, setIsLoginExpanded] = useState(false);
+  const [username, setUsername] = useState("");
+
   useEffect(() => {
     const cookie = getCookie("ra_token_verification");
-    console.log(cookie)
-    setLoggedIn(cookie !== undefined )
+    const storedUsername = getCookie("username");
+    setLoggedIn(!!cookie);
+    setUsername(storedUsername || "");
 
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768); // Adjust this breakpoint as needed
-    };
-
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
-
-  useEffect(() => {
-    const controlNavbar = () => {
-      if (window.scrollY > lastScrollY) {
-        setVisible(false);
-      } else {
-        setVisible(true);
-      }
+    const handleScroll = () => {
+      setVisible(window.scrollY <= lastScrollY);
       setLastScrollY(window.scrollY);
     };
 
-    window.addEventListener('scroll', controlNavbar);
-    return () => {
-      window.removeEventListener('scroll', controlNavbar);
-    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  if (isMobile) {
-    return <MobileHeader isLoggedIn={loggedIn} />;
-  }
+  const handleLogin = (newUsername) => {
+    setLoggedIn(true);
+    setUsername(newUsername);
+  };
+
+  const handleLogout = () => {
+    setLoggedIn(false);
+    setUsername("");
+    setCookie("ra_token_verification", "", { maxAge: 0 });
+    setCookie("username", "", { maxAge: 0 });
+  };
 
   return (
-    <div className={cn(" fixed w-screen flex justify-between items-center px-4 p-4 backdrop-blur-md z-20 duration-500", visible ? 'opacity-100' : 'opacity-0')}>
+    <div className={cn("fixed w-full flex justify-between items-center px-4 py-4 backdrop-blur-md z-20 transition-opacity duration-500", visible ? "opacity-100" : "opacity-0")}>
       <NavigationLogo />
-      <div className="flex-grow flex justify-center z-20">
-        <Navigation />
-      </div>
-      <div className="flex-shrink-0 w-8"></div>
-      {!loggedIn && (
-        <Link
-          href={"/login"}
-          className="text-white z-10 px-2 py-1 rounded-lg bg-zinc-950 border border-black"
-        >
-          Sign in
-        </Link>
-      )}
-      {loggedIn && (
-        <DropdownAvatar>
-          <Avatar className="p-2  border-[1px]">
-            <AvatarImage src={`/api/user/icon/${getCookie("username")} `}></AvatarImage>
-            <AvatarFallback className="z-10 shadow-lg">{getCookie("username")?.slice(0, 2) || "0x"}</AvatarFallback>
+      <nav className="flex space-x-4">
+        {pageOptions.map((option) => (
+          <Link key={option.name} href={option.href} className="text-white px-2 py-1 rounded-lg hover:bg-zinc-800">
+            {option.name}
+          </Link>
+        ))}
+      </nav>
+      {!loggedIn ? (
+        isLoginExpanded ? (
+          <LoginForm onClose={() => setIsLoginExpanded(false)} onLogin={handleLogin} />
+        ) : (
+          <Button onClick={() => setIsLoginExpanded(true)} className="text-white px-2 py-1 rounded-lg bg-zinc-950 border border-black">
+            Sign in
+          </Button>
+        )
+      ) : (
+        <div className="flex items-center space-x-2 bg-zinc-800 p-2 rounded-lg">
+          <span className="text-white">{username.slice(0, 6)}...</span>
+          <Avatar className="w-8 h-8 border-[1px]">
+            <AvatarImage src={`/api/user/icon/${username}`} />
+            <AvatarFallback>{username?.slice(0, 2) || "0x"}</AvatarFallback>
           </Avatar>
-        </DropdownAvatar>
+          <Button variant="outline" onClick={handleLogout}>Log out</Button>
+        </div>
       )}
     </div>
   );
