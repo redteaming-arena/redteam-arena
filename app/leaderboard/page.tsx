@@ -40,8 +40,6 @@ export default async function Leaderboard() {
             {"Leaderboard Rankings/>"}
           </h1>
         <LeaderboardPodium leaders={data}/>
-
-
           <LeaderboardTable />
         </div>
       </main>

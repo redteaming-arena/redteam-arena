@@ -39,7 +39,7 @@ function MobileHeader({ visible = false, isLoggedIn = false }) {
                 href="/login"
                 className="block text-center text-white px-2 py-1 rounded-lg"
               >
-                Sign in
+                Login
               </Link>
             ) : (
 

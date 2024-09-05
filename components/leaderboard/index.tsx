@@ -1,9 +1,7 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import {
-  CaretSortIcon,
-} from "@radix-ui/react-icons"
+import * as React from "react";
+import { CaretSortIcon } from "@radix-ui/react-icons";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -15,9 +13,9 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,8 +23,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -34,119 +32,37 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Skeleton } from "@/components/ui/skeleton"
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type LeaderboardEntry = {
-  position: number
-  username: string
-  score: number
-}
+  position: number;
+  username: string;
+  score: number;
+};
 
-const leaderboardData = [
-  {
-      "position": 1,
-      "username": "0xNone",
-      "score": 0
-  },
-  {
-      "position": 2,
-      "username": "CryptoKing",
-      "score": 95
-  },
-  {
-      "position": 3,
-      "username": "BlockMiner",
-      "score": 89
-  },
-  {
-      "position": 4,
-      "username": "HashMaster",
-      "score": 85
-  },
-  {
-      "position": 5,
-      "username": "BitWizard",
-      "score": 82
-  },
-  {
-      "position": 6,
-      "username": "ChainBreaker",
-      "score": 78
-  },
-  {
-      "position": 7,
-      "username": "SatoshiFan",
-      "score": 75
-  },
-  {
-      "position": 8,
-      "username": "Nakamoto",
-      "score": 72
-  },
-  {
-      "position": 9,
-      "username": "TokenGamer",
-      "score": 70
-  },
-  {
-      "position": 10,
-      "username": "LedgerLord",
-      "score": 68
-  },
-  {
-      "position": 11,
-      "username": "CoinCollector",
-      "score": 65
-  },
-  {
-      "position": 12,
-      "username": "EtherHawk",
-      "score": 62
-  },
-  {
-      "position": 13,
-      "username": "BlockchainBoss",
-      "score": 60
-  },
-  {
-      "position": 14,
-      "username": "NodeNinja",
-      "score": 58
-  },
-  {
-      "position": 15,
-      "username": "SmartContractor",
-      "score": 56
-  },
-  {
-      "position": 16,
-      "username": "CryptoKnight",
-      "score": 54
-  },
-  {
-      "position": 17,
-      "username": "TokenTamer",
-      "score": 52
-  },
-  {
-      "position": 18,
-      "username": "BlockBuster",
-      "score": 50
-  },
-  {
-      "position": 19,
-      "username": "GasGuzzler",
-      "score": 48
-  },
-  {
-      "position": 20,
-      "username": "ChainRider",
-      "score": 45
-  }
+const leaderboardData: LeaderboardEntry[] = [
+  { position: 1, username: "CryptoKing", score: 995 },
+  { position: 2, username: "HashMaster", score: 989 },
+  { position: 3, username: "BlockMiner", score: 950 },
+  { position: 4, username: "SatoshiFan", score: 935 },
+  { position: 5, username: "BitWizard", score: 920 },
+  { position: 6, username: "ChainBreaker", score: 899 },
+  { position: 7, username: "TokenGamer", score: 870 },
+  { position: 8, username: "Nakamoto", score: 860 },
+  { position: 9, username: "LedgerLord", score: 845 },
+  { position: 10, username: "CoinCollector", score: 832 },
+  { position: 11, username: "EtherHawk", score: 810 },
+  { position: 12, username: "NodeNinja", score: 798 },
+  { position: 13, username: "SmartContractor", score: 775 },
+  { position: 14, username: "CryptoKnight", score: 755 },
+  { position: 15, username: "GasGuzzler", score: 735 },
+  { position: 16, username: "BlockBuster", score: 725 },
+  { position: 17, username: "TokenTamer", score: 715 },
+  { position: 18, username: "ChainRider", score: 700 },
+  { position: 19, username: "BlockRocker", score: 680 },
+  { position: 20, username: "MinerJoe", score: 665 },
 ];
-
-
 
 export const columns: ColumnDef<LeaderboardEntry>[] = [
   {
@@ -165,7 +81,7 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
           Username
           <CaretSortIcon className="ml-2 h-4 w-4" />
         </Button>
-      )
+      );
     },
     cell: ({ row }) => <div>{row.getValue("username")}</div>,
   },
@@ -180,12 +96,11 @@ export const columns: ColumnDef<LeaderboardEntry>[] = [
           Score
           <CaretSortIcon className="ml-2 h-4 w-4" />
         </Button>
-      )
+      );
     },
     cell: ({ row }) => <div>{row.getValue("score")}</div>,
   },
- 
-]
+];
 
 function LeaderboardSkeleton() {
   return (
@@ -193,34 +108,21 @@ function LeaderboardSkeleton() {
       {[...Array(10)].map((_, i) => (
         <div key={i} className="flex items-center space-x-4 w-full">
           <Skeleton className="h-8 w-20" />
-          <Skeleton className="h-5 w-full"  />
+          <Skeleton className="h-5 w-full" />
           <Skeleton className="h-5 w-full" />
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 export function LeaderboardTable() {
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [data, setData] = React.useState<LeaderboardEntry[]>([])
-  const [loading, setLoading] = React.useState(true)
-
-  React.useEffect(() => {
-    fetch('/api/game/leaderboard')
-      .then(response => response.json())
-      .then(data => {
-        setData(data)
-        setLoading(false)
-      })
-      .catch(error => {
-        console.error('Error fetching leaderboard data:', error)
-        setLoading(false)
-      })
-  }, [])
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [data, setData] = React.useState<LeaderboardEntry[]>(leaderboardData);
+  const [loading, setLoading] = React.useState(false); // Since the data is pre-loaded
 
   const table = useReactTable({
     data,
@@ -239,17 +141,17 @@ export function LeaderboardTable() {
       columnVisibility,
       rowSelection,
     },
-  })
+  });
 
   if (loading) {
-    return <LeaderboardSkeleton />
+    return <LeaderboardSkeleton />;
   }
 
   return (
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter usernames..."
+          placeholder="Filter by username..."
           value={(table.getColumn("username")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("username")?.setFilterValue(event.target.value)
@@ -272,7 +174,7 @@ export function LeaderboardTable() {
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -280,9 +182,7 @@ export function LeaderboardTable() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                >
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
@@ -330,5 +230,5 @@ export function LeaderboardTable() {
         </div>
       </div>
     </div>
-  )
+  );
 }

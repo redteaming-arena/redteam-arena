@@ -21,13 +21,10 @@ export default function Footer() {
               Home
             </Link>
             <Link href="/leaderboard" className="hover:text-gray-400">
-              Leaderboard
+            Leaderboard
             </Link>
             <Link href="/games" className="hover:text-gray-400">
               Games
-            </Link>
-            <Link href="/jailbreaks" className="hover:text-gray-400">
-                Jailbreaks
             </Link>
           </div>
 

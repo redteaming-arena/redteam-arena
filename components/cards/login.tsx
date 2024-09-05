@@ -32,7 +32,7 @@ enum AuthState {
 }
 
 
-const EmailVerificationCard = ({ email } : { email : string }) => {
+const LoginVerificationCard = ({ user, password } : { user : string, password: string }) => {
   
   const {toast} = useToast()
   const [isDisabled, setIsDisabled] = useState(false);
@@ -42,18 +42,9 @@ const EmailVerificationCard = ({ email } : { email : string }) => {
       // Disable the button
       setIsDisabled(true);
 
-      // Simulate sending the email
-      // You would actually call your API here to resend the email
-      const response = await handleRegister(email)
-        if (response.success){
-          toast({
-            description: <div className="flex flex-col"><CheckMarkIcon className="w-5 h-5"/> <div>{`email successfully sent to user`}</div></div>,
-          })
-        } else {
-          toast({
-            description: <div className="flex flex-col"> <div>{`failed to send verification email`}</div></div>,
-          })
-        }
+      toast({
+        description: <div className="flex flex-col"><CheckMarkIcon className="w-5 h-5"/> <div>{`successfully registered as `}</div></div>,
+      })
 
       // Re-enable the button after 10 seconds
       setTimeout(() => {
@@ -143,7 +134,6 @@ export function LoginCard({ providers = {} }: LoginCardProps) {
     <Card className="w-full max-w-[350px] mx-auto">
     { (authState === AuthState.BEGIN || authState === AuthState.LOGIN) && <>
       <CardHeader className="items-center">
-        <CardDescription className="text-sm sm:text-sm">Join the fight, enter the arena today.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
       { authState === AuthState.BEGIN && <>
@@ -170,8 +160,15 @@ export function LoginCard({ providers = {} }: LoginCardProps) {
         )}
 
         <div className="space-y-2">
-          <Input id="email" type="email" placeholder="name@yourcompany.com" className="w-full" value={email} onChange={handleEmailChange} />
-        </div></>}
+          <Input id="username" type="username" placeholder="username" className="w-full" value={email} onChange={handleEmailChange} />
+        </div>
+        <div className="space-y-2">
+          <Input id="password" type="password" placeholder="password" className="w-full" value={email} onChange={handleEmailChange} />
+        </div>
+        
+        </>
+        
+        }
         
         {authState === AuthState.LOGIN && <>
           <div className="space-y-2">
@@ -183,12 +180,12 @@ export function LoginCard({ providers = {} }: LoginCardProps) {
       </CardContent>
       <CardFooter>
         <Button className="w-full" onClick={handleEmailSignIn}>
-          Continue with email
+          Login
         </Button>
       </CardFooter>
       {errorMessage && <p className="text-red-500 text-center">{errorMessage}</p>}
       </>}
-      {authState === AuthState.REGISTER && <EmailVerificationCard email={email}/>}
+ {authState === AuthState.REGISTER && <LoginVerificationCard user={user} password={password}/>}
 
     </Card>
   );

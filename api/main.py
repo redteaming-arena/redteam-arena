@@ -1,8 +1,8 @@
 import uvicorn
 from dotenv import load_dotenv
 
-from api.routes.index import app
-from api.database import engine, Base
+from routes.index import app
+from database import engine, Base
 
 # load .env
 load_dotenv()

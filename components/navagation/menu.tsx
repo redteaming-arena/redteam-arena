@@ -16,66 +16,7 @@ import { ChevronDownIcon, ChevronUpIcon } from '@radix-ui/react-icons';
 import { Skeleton } from "../ui/skeleton";
 
 const components: { title: string | any; href: string; description: string }[] = [
-  {
-    title: "Current Games",
-    href: "/games",
-    description:
-      "Have a browse of the current game selection.",
-  },
-  {
-    title: <>Create Games  <span className="
-    mr-3 text-xl 2xl:text-2xl inline-block -skew-x-12 rounded-lg border border-gray-200 bg-gradient-to-br from-blue-300 via-blue-200 to-blue-100 px-2 py-[.08rem] !text-sm font-bold dark:text-blue-50 shadow-lg shadow-green-500/10 dark:from-blue-700 dark:via-blue-700 dark:to-blue-600 
-   ">
-    Blue-Team
-</span>
-</>,
-    href: "/build/game",
-    description:
-      "Building to understand better interpolate model outputs",
-  },
 ];
-
-        {/* <NavigationMenuItem>
-          <NavigationMenuTrigger>Getting started</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <ul className="grid gap-3 p-6 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
-              <li className="relative row-span-3">
-                <NavigationMenuLink asChild>
-                  <a
-                    className="relative flex h-full w-full select-none flex-col justify-end rounded-md p-6 no-underline outline-none focus:shadow-md hover:opacity-90 duration-200"
-                    href="/"
-                  >
-                    <div className="absolute inset-0 z-1 opacity-90">
-                      <Image 
-                        alt="blue-sky" 
-                        src={Icons} 
-                        layout="fill" 
-                        objectFit="cover" 
-                        className="rounded-md"
-                      />
-                    </div>
-                    <div className=" w-fit mb-2 mt-2 left-2 mx-auto my-auto text-lg font-bold z-10 text-black  bg-gradient-radial from-white to-white/90 p-2 rounded-lg shadow-md">
-                      Game
-                    </div>
-                    <p className="text-sm  font-medium leading-tight text-muted-foreground z-10">
-                        BadWords
-                    </p>
-                  </a>
-                </NavigationMenuLink>
-              </li>
-              <ListItem href="/docs" title="Create Game">
-                
-              </ListItem>
-              <ListItem href="/docs/installation" title="Installation">
-                How to install dependencies and structure your app.
-              </ListItem>
-              <ListItem href="/docs/primitives/typography" title="Typography">
-                Styles for headings, paragraphs, lists...etc
-              </ListItem>
-            </ul>
-          </NavigationMenuContent>
-        </NavigationMenuItem> */}
-
 
 
 export function Navigation() {
@@ -95,49 +36,12 @@ export function Navigation() {
 
   const MobileNavigation = () => (
     <div className="flex flex-col w-full z-20">
-      <button
-        onClick={() => setIsGameMenuOpen(!isGameMenuOpen)}
-        className="flex justify-between items-center w-full py-2 px-4 hover:bg-black/70 z-20"
-      >
-        <>Games</>
-        {isGameMenuOpen ? <ChevronUpIcon className="h-5 w-5 z-20" /> : <ChevronDownIcon className="h-5 w-5 z-20" />}
-      </button>
-      {isGameMenuOpen && (
-        <div className="pl-4 z-20 animate-navigationSlideIn">
-          
-           <a
-                    className="relative flex h-full w-full select-none flex-col justify-end rounded-md p-6 no-underline outline-none focus:shadow-md hover:opacity-90 duration-200"
-                    href="/games/1"
-                  >
-                    <div className="absolute inset-0 z-1 opacity-80">
-                    <Suspense fallback={<Skeleton className="rounded-md"/>}>
-                      <Image
-                        alt="blue-sky"
-                        src={Icons}
-                        layout="fill"
-                        objectFit="cover"
-                        className="rounded-md"
-                        loading="lazy"
-                        placeholder="blur"
-                      />
-                      </Suspense>
-                    </div>
-                    <div className="w-fit left-2 mx-auto my-auto text-lg font-bold z-10 text-black bg-gradient-radial from-white to-white/90 p-2 rounded-lg shadow-md">
-                      Game Demo
-                    </div>
-                  </a>
-          {components.map((component) => (
-            <Link key={component.title} href={component.href} className="block py-2">
-              {component.title}
-            </Link>
-          ))}
-        </div>
-      )}
+
+      <Link href="/games" className="block py-2 px-4 ">
+        Games
+      </Link>
       <Link href="/leaderboard" className="block py-2 px-4 ">
         LeaderBoard
-      </Link>
-      <Link href="/jailbreaks" className="block py-2 px-4 ">
-        Jailbreaks
       </Link>
     </div>
   );
@@ -165,7 +69,7 @@ export function Navigation() {
                       />
                     </div>
                     <div className="w-fit left-2 mx-auto my-auto text-lg font-bold z-10 text-black bg-gradient-radial from-white to-white/90 p-2 rounded-lg shadow-md">
-                      Game Demo
+                      Game Demo√
                     </div>
                   </Link>
                 </NavigationMenuLink>
