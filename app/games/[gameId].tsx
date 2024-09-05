@@ -1,15 +1,23 @@
-import { useRouter } from "next/router";
+import { useRouter } from 'next/router';
+import { exampleGames } from '@/data/games';
 
-export default function GameDetails() {
+const GamePage = () => {
   const router = useRouter();
   const { gameId } = router.query;
 
+  const game = exampleGames.find((game) => game.id === gameId);
+
+  if (!game) {
+    return <div>Game not found</div>;
+  }
+
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-      <div className="text-center">
-        <h1 className="text-3xl font-bold">Game {gameId} - Not available</h1>
-        <p className="text-gray-400 mt-4">This game is currently unavailable. Please check back later.</p>
-      </div>
+    <div>
+      <h1>{game.title}</h1>
+      <p>{game.description}</p>
+      {/* Add other game details here */}
     </div>
   );
-}
+};
+
+export default GamePage;
