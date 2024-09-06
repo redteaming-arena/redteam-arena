@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import Footer from "@/components/footer";
 import { Input } from "@/components/ui/input";
 import { exampleGames } from "@/data/games";
+import Link from "next/link";
 
 import { Press_Start_2P } from "next/font/google";
 const retroFont = Press_Start_2P({ subsets: ["latin"], weight: "400" });
@@ -16,39 +17,37 @@ const textColor = "text-green-500";
 const accentColor = "text-white";
 const borderColor = "border-green-500";
 
-const GameCard = ({ title, author, daysAgo, description, image }) => {
+const GameCard = ({ id }) => {
+  const game = exampleGames[id - 1];
   const [isFlipped, setIsFlipped] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const gameImage = image || placeholderImage;
-  const dateObj = new Date(daysAgo);
+  const gameImage = game.image || placeholderImage;
   const currentDate = new Date();
-  const timeDifference = currentDate - dateObj;
-
   return (
     <div
       className={`w-full p-2 ${isExpanded ? 'fixed inset-0 z-50 flex items-center justify-center' : ''}`}
       onClick={() => setIsExpanded(!isExpanded)}
     >
-      <Card
-        className={`h-full relative transition-all duration-300 ${backgroundColor} ${borderColor} border-2
-          ${isExpanded ? 'w-full h-full max-w-4xl max-h-[90vh] overflow-auto' : 'hover:shadow-green-500 hover:shadow-lg'}
-          ${isFlipped ? 'rotate-y-180' : ''}`}
-        onMouseEnter={() => setIsFlipped(true)}
-        onMouseLeave={() => setIsFlipped(false)}
-      >
-        <div className="w-full h-full backface-hidden">
-          <CardContent className="p-4">
-            <h2 className={`${retroFont.className} text-sm ${accentColor}`}>
-              {title}
-            </h2>
-
-            <p className={`${retroFont.className} text-xs ${textColor}`}>
-              {description}
-            </p>
-          </CardContent>
-        </div>
-      </Card>
+      <Link href={`/games/${id}`}>
+        <Card
+          className={`h-full relative transition-all duration-300 ${backgroundColor} ${borderColor} border-2
+            ${isExpanded ? 'w-full h-full max-w-4xl max-h-[90vh] overflow-auto' : 'hover:shadow-green-500 hover:shadow-lg'}
+            ${isFlipped ? 'rotate-y-180' : ''}`}
+          onMouseEnter={() => setIsFlipped(true)}
+          onMouseLeave={() => setIsFlipped(false)}
+        >
+          <div className="w-full h-full backface-hidden">
+            <CardContent className="p-4">
+              <h2 className={`${retroFont.className} text-sm ${accentColor}`}>
+                {game.name}
+              </h2>
+              <p className={`${retroFont.className} text-xs ${textColor}`}>
+                {game.description}
+              </p>
+            </CardContent>
+          </div>
+        </Card>
+      </Link>
     </div>
   );
 };
@@ -58,7 +57,7 @@ export default function Games() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredGames = games.filter((game) =>
-    game.title.toLowerCase().includes(searchQuery.toLowerCase())
+    game.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -82,11 +81,7 @@ export default function Games() {
             filteredGames.map((game) => (
               <GameCard
                 key={game.id}
-                title={game.title}
-                author={game.publisher}
-                daysAgo={game.release_date}
-                description={game.description}
-                image={game.image}
+                id={game.id}
               />
             ))
           ) : (
