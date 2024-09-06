@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 
 interface Game{
     id : number;
-    title : string;
-    description : string;
+    name : string;
+    url : string;
     genre : string;
     difficulty : number;
     wins: number;

@@ -55,7 +55,7 @@ const GameCard = ({ id }) => {
 export default function Games() {
   const [games, setGames] = useState(exampleGames);
   const [searchQuery, setSearchQuery] = useState("");
-
+  
   const filteredGames = games.filter((game) =>
     game.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
