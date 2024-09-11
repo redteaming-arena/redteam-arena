@@ -238,7 +238,11 @@ async def get_chat_history(current_user: str = Depends(get_current_user), db: Se
             if filename.endswith('.json'):
                 file_path = os.path.join(dirpath, filename)
                 with open(file_path, 'r') as file:
-                    session_data = json.load(file)
+                    try:
+                        session_data = json.load(file)
+                    except:
+                        print(file_path)
+                        continue
                     # Check if the game is completed (not ongoing)
                     if session_data['state'] != 'ongoing':
                         completed_sessions.append({

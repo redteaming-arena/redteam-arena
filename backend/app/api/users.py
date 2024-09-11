@@ -27,6 +27,32 @@ async def get_user_profile(
     Retrieve the profile for the current user
     elo rating, number of games played, number of games won, number of games lost
     """
+
+    # First handle anonymous
+    if current_user == "anonymous":
+        return {
+            "elo_rating": 1000,
+            "global_rank": 0,
+            "games_played": 0,
+            "games_won": 0,
+            "games_lost": 0,
+            "completed_sessions": [],
+            "username" : current_user
+        }
+
+    # Next handle normal case
+    logger.info(f"{current_user} searches history")
+    folder_name = f"db/json/{current_user}"
+    if not os.path.exists(folder_name):
+        raise HTTPException(status_code=404, detail="No data found for this user")
+
+    df = get_battle_df()
+    all_elo_ratings = elo_calculation(df, STEP_SIZE)
+    elo_rating = get_elo_by_player(all_elo_ratings, current_user)
+
+    players = list(all_elo_ratings['players'].keys())
+
+
     logger.info(f"{current_user} searches history")
     folder_name = f"db/json/{current_user}"
     if not os.path.exists(folder_name):
