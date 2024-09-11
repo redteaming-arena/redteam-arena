@@ -244,7 +244,7 @@ async def get_chat_history(current_user: str = Depends(get_current_user), db: Se
                         print(file_path)
                         continue
                     # Check if the game is completed (not ongoing)
-                    if session_data['state'] != 'ongoing':
+                    if session_data['state'] in ["win", "loss"]:
                         completed_sessions.append({
                             'session_id': session_data['session_id'],
                             'target_phrase': session_data['target_phrase'],
