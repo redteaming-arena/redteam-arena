@@ -85,8 +85,6 @@ alembic downgrade <revision_id>
 The project uses SQLAlchemy ORM for defining database models. The main models are:
 
 - `GameSession`: Represents a game session with attributes like session_id, username, state, target_phrase, etc.
-- `Leaderboard`: Represents a leaderboard with a timestamp.
-- `LeaderboardEntry`: Represents an entry in a leaderboard with category, item, score, and delta.
 
 For more details on the models and their relationships, refer to the `models.py` file.
 
