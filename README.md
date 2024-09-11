@@ -41,7 +41,7 @@ npm run start
 To start the backend, follow these instructions.
 First, modify line 13 of `/backend/main.py` to read `    allow_origins=["*"],`.
 
-## Alembic Setup and Usage Guide
+### Alembic Setup and Usage Guide
 
 Alembic is a database migration tool for SQLAlchemy. It allows you to:
 
@@ -49,7 +49,7 @@ Alembic is a database migration tool for SQLAlchemy. It allows you to:
 - Apply and revert these changes in a controlled manner
 - Manage different versions of your database schema across different environments
 
-[read more](./alembic/README)
+[read more](./alembic/README.md)
 
 ### Backend
 
