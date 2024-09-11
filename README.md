@@ -49,7 +49,7 @@ Alembic is a database migration tool for SQLAlchemy. It allows you to:
 - Apply and revert these changes in a controlled manner
 - Manage different versions of your database schema across different environments
 
-[read more](./alembic/README)
+[read more](./alembic/README.md)
 
 ### Backend
 
