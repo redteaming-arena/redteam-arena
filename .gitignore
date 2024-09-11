@@ -7,4 +7,3 @@ backend/app/data/
 **/*.pyc
 .venv/
 sql_redarena.db
-alembic.ini
