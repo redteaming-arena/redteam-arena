@@ -16,6 +16,8 @@ Right now, we're running one game:
 
 - [**Bad Words**](https://redarena.ai/): Make the machine spew bad words. We will randomly sample a model and a naughty phrase. You have 60 seconds to make the model say the phrase. Winners are ranked on an elo leaderboard.
 
+![Bad Words](./asset/bad_words.png)
+
 But this is just the beginning. We've got plans for more games. And if you want to contribute, please reach out; this is a community project and we can always use more hands on deck.
 
 ### Running the Code Locally
