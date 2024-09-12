@@ -10,13 +10,11 @@ const SuccessPage = ({
   onReset,
   sessionId,
   timeTaken,
-  onLogin,
   currentModel,
   currentPhrase,
   onAbout,
   onHomeButton,
   showAbout = false,
-  isUserLoggedIn,
 }) => {
   const [shared, setShared] = React.useState(false);
   const [leaderboardData, setLeaderboardData] = useState(null);
@@ -85,10 +83,6 @@ const SuccessPage = ({
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-500 font-mono p-4 pb-12">
         <div className="absolute top-4 right-4 flex gap-2">
           <NavButton text={"HOME"} onClick={onHomeButton} />
-          <NavButton
-            text={isUserLoggedIn ? "LOGOUT" : "LOGIN"}
-            onClick={onLogin}
-          />
           {showAbout && <NavButton text="ABOUT" onClick={onAbout} />}
         </div>
         <div className="text-center">

@@ -12,27 +12,25 @@ import {
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
 
+const COOKIE_NAME = "_warned_agreement";
+const COOKIE_EXPIRY = 7;
+
 export function AlertDialogWarning({ children, onStart }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [hasAgreed, setHasAgreed] = useState(false);
   const [shouldCallOnStart, setShouldCallOnStart] = useState(false);
 
   useEffect(() => {
-    const warned = Cookies.get("_warned_agreement") === "true";
-    setHasAgreed(warned);
+    const warned = Cookies.get(COOKIE_NAME) === "true";
     if (!warned) {
       setIsOpen(true);
     }
   }, []);
 
-  const handleCancel = () => {
-    setIsOpen(false);
-  };
+  const handleCancel = () => setIsOpen(false);
 
   const handleContinue = () => {
-    setHasAgreed(true);
     setIsOpen(false);
-    Cookies.set("_warned_agreement", "true", { expires: 7 });
+    Cookies.set(COOKIE_NAME, "true", { expires: COOKIE_EXPIRY });
     if (shouldCallOnStart) {
       onStart();
       setShouldCallOnStart(false);
@@ -40,7 +38,7 @@ export function AlertDialogWarning({ children, onStart }) {
   };
 
   const handleTriggerClick = (e) => {
-    if (Cookies.get("_warned_agreement") === "true") {
+    if (Cookies.get(COOKIE_NAME) === "true") {
       onStart();
     } else {
       e.preventDefault();
@@ -50,18 +48,33 @@ export function AlertDialogWarning({ children, onStart }) {
   };
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+    <AlertDialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (Cookies.get(COOKIE_NAME) !== "true") {
+          setIsOpen(false);
+        } else {
+          setIsOpen(open);
+        }
+      }}
+    >
       <AlertDialogTrigger asChild onClick={handleTriggerClick}>
         {children}
       </AlertDialogTrigger>
       <AlertDialogContent className="bg-black text-white text-left">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-xl"></AlertDialogTitle>
+          <AlertDialogTitle className="text-xl" />
           <AlertDialogDescription>
-            <span className="text-xl">Warning: some content may contain racist, sexual, violent, or other strong language.</span>
+            <span className="text-xl">
+              Warning: some content may contain racist, sexual, violent, or other strong language.
+            </span>
             <br />
             <span className="text-sm text-white">
-              Note: this research preview collects user dialogue data, and reserves the right to distribute it under a CC-BY license. Learn more about the terms <a href="https://redarena.ai/terms" className="underline">here</a>.
+              Note: this research preview collects user dialogue data, and reserves the right to distribute it under a CC-BY license. Learn more about the terms{" "}
+              <a href="https://redarena.ai/terms" className="underline">
+                here
+              </a>
+              .
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
