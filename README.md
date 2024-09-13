@@ -27,6 +27,8 @@ First, run
 git clone https://github.com/redteaming-arena/redteam-arena
 ```
 
+### Frontend
+
 Start local frontend by executing the following:
 
 You can use npm, or pnpm to set up and run the frontend. Choose the instructions that match your preferred package manager:
@@ -37,11 +39,12 @@ npm install
 npm run start
 ```
 
+### Backend
 
 To start the backend, follow these instructions.
-First, modify line 13 of `/backend/main.py` to read `    allow_origins=["*"],`.
+First, modify line 13 of `/backend/main.py` to read `allow_origins=["*"],`.
 
-### Alembic Setup and Usage Guide
+#### Alembic Setup and Usage Guide
 
 Alembic is a database migration tool for SQLAlchemy. It allows you to:
 
@@ -50,8 +53,6 @@ Alembic is a database migration tool for SQLAlchemy. It allows you to:
 - Manage different versions of your database schema across different environments
 
 [read more](./alembic/README.md)
-
-### Backend
 
 Finally, execute the following from a fresh conda environment:
 ```bash
