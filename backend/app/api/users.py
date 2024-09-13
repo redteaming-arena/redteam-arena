@@ -15,11 +15,7 @@ logger = logging.getLogger(__name__)
 
 STEP_SIZE = 0.1
 
-@router.get("/me", response_model=User)
-async def read_users_me(current_user: dict = Depends(get_current_user)):
-    return current_user
-
-@router.get("/profile", response_model=dict)
+@router.get("/", response_model=dict)
 async def get_user_profile(
     current_user: dict = Depends(get_current_user)
 ):
@@ -46,33 +42,41 @@ async def get_user_profile(
     if not os.path.exists(folder_name):
         raise HTTPException(status_code=404, detail="No data found for this user")
 
-    df = get_battle_df()
-    all_elo_ratings = elo_calculation(df, STEP_SIZE)
-    elo_rating = get_elo_by_player(all_elo_ratings, current_user)
+    try:
+        df = get_battle_df()
+        all_elo_ratings = elo_calculation(df, STEP_SIZE)
+        elo_rating = get_elo_by_player(all_elo_ratings, current_user)
+        players = list(all_elo_ratings['players'].keys())
+        scores = list(all_elo_ratings['players'].values())
+        sorted_combined = sorted(list(zip(players, scores)), key=lambda x: x[1], reverse=True)
 
-    players = list(all_elo_ratings['players'].keys())
-    scores = list(all_elo_ratings['players'].values())
-    sorted_combined = sorted(list(zip(players, scores)), key=lambda x: x[1], reverse=True)
-
-    rank = sorted_combined.index((current_user, elo_rating)) + 1
-
-    
-    completed_sessions = []
-    for dirpath, dirnames, filenames in os.walk(folder_name):
-        for filename in filenames:
-            if filename.endswith(".json"):
-                file_path = os.path.join(dirpath, filename)
-                with open(file_path, "r") as file:
-                    session_data = json.load(file)
-                    # Check if the game is completed (not ongoing)
-                    if session_data["state"] != "ongoing":
-                        completed_sessions.append({
-                            "session_id": session_data["session_id"],
-                            "target_phrase": session_data["target_phrase"],
-                            "state": session_data["state"],
-                            "shared" : session_data.get("share", False)
-                        })
-
+        completed_sessions = []
+        rank = sorted_combined.index((current_user, elo_rating)) + 1
+        for dirpath, dirnames, filenames in os.walk(folder_name):
+            for filename in filenames:
+                if filename.endswith(".json"):
+                    file_path = os.path.join(dirpath, filename)
+                    with open(file_path, "r") as file:
+                        session_data = json.load(file)
+                        # Check if the game is completed (not ongoing)
+                        if session_data["state"] != "ongoing":
+                            completed_sessions.append({
+                                "session_id": session_data["session_id"],
+                                "target_phrase": session_data["target_phrase"],
+                                "state": session_data["state"],
+                                "shared" : session_data.get("share", False)
+                            })
+    except ValueError as e:
+        return {
+            "elo_rating" : elo_rating,
+            "global_rank": "NaN",
+            "games_played": len(completed_sessions),
+            "games_won": len([s for s in completed_sessions if s["state"] == "win"]),
+            "games_lost": len([s for s in completed_sessions if s["state"] == "loss"]),
+            "completed_sessions": completed_sessions,
+            "username" : current_user
+        }
+        
     user_profile = {
         "elo_rating": elo_rating,
         "global_rank": rank,

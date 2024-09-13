@@ -32,14 +32,14 @@ export const getChats = async () => {
 
 export const getLeaderboard = async (user = false) => {
   if (user) {
-    const response = await fetch(`${API_URL}/api/leaderboard/get_leaderboard/me`,
+    const response = await fetch(`${API_URL}/api/leaderboard/me`,
       {
         headers: { 'Authorization': `Bearer ${getToken()}` },
       }
     );
     return handleResponse(response);
   } else {
-    const response = await fetch(`${API_URL}/api/leaderboard/get_leaderboard`);
+    const response = await fetch(`${API_URL}/api/leaderboard/`);
     return handleResponse(response);
   }
 };
@@ -56,7 +56,7 @@ export const handleLeaderboard = async (user = false) => {
 };
 
 export const fetchProfile = async () => {
-  const response = await fetch(`${API_URL}/api/user/profile`, {
+  const response = await fetch(`${API_URL}/api/user/`, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
@@ -328,13 +328,6 @@ export const writeSession = async sessionId => {
     }
     throw error;
   }
-};
-
-export const getAllUsers = async () => {
-  const response = await fetch(`${API_URL}/api/admin/users`, {
-    headers: { Authorization: `Bearer ${getToken()}` },
-  });
-  return handleResponse(response);
 };
 
 export const getSharedMessages = async id => {
