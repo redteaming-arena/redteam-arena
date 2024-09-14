@@ -52,8 +52,8 @@ class AIModelSampler:
             "anthropic": AnthropicClient(api_key=os.getenv("ANTHROPIC_API_KEY")),
             "google": GeminiClient(api_key=os.getenv("GEMINI_API_KEY")),
             "fireworks": OpenAIClient(
-                api_key=os.getenv("FIREWORKS_API_KEY"),
-                base_url="https://api.fireworks.ai/inference/v1"
+               api_key=os.getenv("FIREWORKS_API_KEY"),
+               base_url="https://api.fireworks.ai/inference/v1"
             ),
         }
 

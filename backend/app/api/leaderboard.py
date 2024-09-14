@@ -128,11 +128,11 @@ def get_leaderboard_with_delta():
 
     return leaderboard_with_delta
 
-@router.get("/get_leaderboard")
+@router.get("/")
 async def get_leaderboard():
     return get_leaderboard_with_delta()
 
-@router.get("/get_leaderboard/me")
+@router.get("/me")
 async def get_leaderboard(
     current_player: dict = Depends(get_current_user),
     top_n: int = Query(10, description="Number of top players to return"),

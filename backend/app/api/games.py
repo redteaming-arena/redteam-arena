@@ -1,29 +1,33 @@
-# app/api/games.py
+from __future__ import annotations
+# Standard library imports
 import os
 import json
+import string
+from datetime import datetime
+from uuid import UUID, uuid4
+
+# Third-party imports
+import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import StreamingResponse
-from app.core.security import get_current_user
-from app.schemas.game import GameCreate, GameSessionResponse, GameHistoryResponse
-from uuid import UUID, uuid4
-import logging
-import numpy as np
-from app.ai_models import sampler
-from typing import AsyncGenerator, List
-from app.core.utils import DB_DIR
-from datetime import datetime
-from .targetPhraseList import targets
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from app.database import get_db, GameSession, GameState
 import aiofiles
 import aiofiles.os
-import string
+from typing import AsyncGenerator, List
+
+# Local application imports
+from app.core.security import get_current_user
+from app.schemas.game import GameCreate, GameHistoryResponse, GameSessionResponse
+from app.models import sampler
+from app.core.utils import DB_DIR
+from app.db.models import GameSession, GameState
+from app.db.session import get_db
+from .targetPhraseList import targets
 
 UUID_LENGTH = 41
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 @router.post("/create", response_model=GameCreate)
 async def create_game(current_user: str = Depends(get_current_user), 
@@ -49,8 +53,6 @@ async def create_game(current_user: str = Depends(get_current_user),
     
     db.add(new_game)
     db.commit()
-    
-    logger.info(f"New game created for user: {current_user}, session_id: {session_id}, target_phrase: {target_phrase}, model: {model['name']}")
     
     return_dict = {"session_id": session_id, "target_phrase": target_phrase, "model": model["name"]}
     return return_dict
@@ -79,9 +81,6 @@ async def game_chat(
         raise HTTPException(status_code=404, detail="Game session not found")
     
     client = sampler.get_client(game.provider)
-    
-    # target = re.escape(game.target_phrase.lower())
-    # pattern = rf'\b{target}\b'
 
     async def generate_response() -> AsyncGenerator[str, None]:
         nonlocal game
@@ -112,7 +111,6 @@ async def game_chat(
             yield f'event:end\ndata: {json.dumps({"model_response": chunk_response, "game_state": game.state.value, "target_phrase": game.target_phrase})}\n\n'
 
         except Exception as e:
-            logger.error(f"Error calling AI API: {str(e)}")
             print("Error calling AI API:", str(e))
             obj = {
                 "model_response": "I'm sorry, I'm having trouble responding right now.",
@@ -129,7 +127,6 @@ async def mark_session_as_shared(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    logger.info(f"{current_user} is marking session_id: {session_id} as shared")
     folder_name = os.path.join(DB_DIR,current_user)
     session_id_str = str(session_id)
     
@@ -185,7 +182,7 @@ async def get_shared_chat_history(session_id: UUID):
 
     for current_folder, _, files in os.walk(DB_DIR):
         for file_name in files:
-            if session_id_str in file_name[-UUID_LENGTH:-4]:  # Check if session_id matches file name
+            if session_id_str in file_name[-UUID_LENGTH:-4]:
                 folder_name = current_folder
                 file_path = os.path.join(folder_name, file_name)
                 found = True
@@ -207,7 +204,7 @@ async def get_shared_chat_history(session_id: UUID):
             chat_history =  game_data.get("chat_history", "[]")
             if isinstance(chat_history, str):
                 chat_history = json.loads(chat_history)
-            # Return the game data
+
             return {
                 "username": game_data.get("username"),
                 "state": game_data.get("state"),
@@ -222,11 +219,10 @@ async def get_shared_chat_history(session_id: UUID):
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="Error decoding game data")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An error occurred")
 
 @router.get("/history", response_model=List[GameHistoryResponse])
 async def get_chat_history(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
-    logger.info(f"{current_user} searches history")
     folder_name = f"db/json/{current_user}"
     
     if not os.path.exists(folder_name):
@@ -326,8 +322,7 @@ async def write_session_to_file(username: str, session_id: UUID, game_data: dict
     # Write the game data to the file
     async with aiofiles.open(filename, mode='w') as f:
         await f.write(json.dumps(game_data, indent=2))
-    
-    logger.info(f"Game session written to file: {filename}")
+
 
 @router.post("/forfeit")
 async def forfeit_session(
@@ -341,7 +336,8 @@ async def forfeit_session(
 
     game_session = db.query(GameSession).filter(
         GameSession.session_id == str(session_id),
-        GameSession.username == current_username
+        GameSession.username == current_username,
+        GameSession.state == GameState.PLAYING
     ).first()
     
     if game_session is None:
@@ -369,7 +365,6 @@ async def write_session(
     current_user: str = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    logger.info(f"Received write_session request for session_id: {session_id}")
     
     game_session = db.query(GameSession).filter(
         GameSession.session_id == str(session_id),
@@ -383,7 +378,6 @@ async def write_session(
     try:
         db.add(game_session)
         db.commit()
-        logger.info(f"Session {session_id} written successfully")
         
         background.add_task(
             write_session_to_file,
@@ -402,5 +396,4 @@ async def write_session(
         }
     except SQLAlchemyError as e:
         db.rollback()
-        logger.error(f"Error in write_session: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"An error occurred while writing the session: {str(e)}")

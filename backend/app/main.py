@@ -1,11 +1,14 @@
-# app/main.py
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.api import auth, games, leaderboard, users
 from app.core.config import settings
+from app.db import models, session
 
 app = FastAPI(title=settings.PROJECT_NAME)
+
+# Database Creation
+models.Base.metadata.create_all(bind=session.engine)
 
 # Configure CORS
 app.add_middleware(

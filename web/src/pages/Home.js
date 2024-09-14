@@ -26,8 +26,18 @@ const Home = () => {
   const [currentPhrase, setCurrentPhrase] = useState(null);
   const [currentModel, setCurrentModel] = useState(null);
   const [sessionId, setSessionId] = useState(null);
-  const [isUserLoggedIn, setIsUserLoggedIn] = useState(isLoggedIn());
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
   const [sessionWritten, setSessionWritten] = useState(false);
+
+
+  useEffect(() => {
+    const handleLoggedIn = async () => {
+      const logged_in = await isLoggedIn();
+      setIsUserLoggedIn(logged_in)
+    }
+
+    handleLoggedIn();
+  }, [])
 
   useEffect(() => {
     if (page === "countdown" && count > 0) {
@@ -228,11 +238,9 @@ const Home = () => {
           sessionId={sessionId}
           currentModel={currentModel}
           currentPhrase={currentPhrase}
-          onLogin={isUserLoggedIn ? handleLogout : showLoginPage}
           onAbout={handleAbout}
           showAbout={showAbout} // Set to false to hide the About button
           onHomeButton={onHomeButton}
-          isUserLoggedIn={isUserLoggedIn}
         />
       )}
       {page === "success" && (
@@ -242,11 +250,9 @@ const Home = () => {
           currentModel={currentModel}
           currentPhrase={currentPhrase}
           timeTaken={TIMER_DURATION - successTime}
-          onLogin={isUserLoggedIn ? handleLogout : showLoginPage}
           onAbout={handleAbout}
           showAbout={showAbout} // Set to false to hide the About button
           onHomeButton={onHomeButton}
-          idUserLoggedIn={isUserLoggedIn}
         />
       )}
       {page === "loading" && <LoadingScreen />}
