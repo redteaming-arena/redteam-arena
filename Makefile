@@ -14,3 +14,6 @@ down:
 	docker rm $(IMAGE_NAME)
 enter:
 	docker exec -it $(IMAGE_NAME) /bin/bash
+
+db:
+	alembic revision --autogenerate -m "Add GameSession" && alembic upgrade head
