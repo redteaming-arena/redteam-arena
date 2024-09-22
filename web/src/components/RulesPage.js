@@ -46,6 +46,11 @@ const RulesPage = ({
             onAbout={onAbout}
           />
         </div>
+        <Badge className="mt-4">
+          <a href="https://x.com/elder_plinius" target="_blank">Pliny</a>/
+          <a href="https://discord.gg/basi" target="_blank">BASI</a>&nbsp;x&nbsp;
+          <a href="https://discord.gg/bgx3wjaZYC" target="_blank">Chatbot Arena</a>
+        </Badge>        
         <div className="h-[80vh] flex flex-col items-center justify-center text-center w-full max-w-6xl mx-auto">
           <div className="w-full mb-8">
             <CyberpunkText text="BAD WORDS" />
@@ -65,7 +70,7 @@ const RulesPage = ({
             />
           </AlertDialogWarning>
         </div>
-        <Badge className="mt-4">More games coming soon</Badge>
+        <Badge className="mt-4">More games coming soon!</Badge>
       </div>
       <Footer />
     </>
