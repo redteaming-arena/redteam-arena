@@ -1,0 +1,25 @@
+name: Backend Build Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up python 3.7
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.10.x"
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install coverage
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi  # Complete the pip install command
+    - name: Run Pytest
+      run: pytest backend/test/main.py -v
