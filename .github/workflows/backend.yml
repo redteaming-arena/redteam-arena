@@ -28,4 +28,4 @@ jobs:
           
       - name: 🧪 Test with pytest
         run: |
-          pytest backend/test/main.py -v
+          pytest backend/app/test/main.py -v
