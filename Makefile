@@ -1,3 +1,4 @@
+.PHONY: clean
 
 IMAGE_NAME=redteam
 up:
@@ -17,3 +18,9 @@ enter:
 
 db:
 	alembic revision --autogenerate -m "Add GameSession" && alembic upgrade head
+
+clean:
+	@echo "Cleaning __pycache__ and .pytest_cache directories..."
+	@find . -type d -name '__pycache__' -exec rm -r {} +
+	@find . -type d -name '.pytest_cache' -exec rm -r {} +
+	@echo "Clean complete."
