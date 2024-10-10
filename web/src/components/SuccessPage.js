@@ -13,6 +13,7 @@ const SuccessPage = ({
   onLogin,
   currentModel,
   currentPhrase,
+  modelResponse,
   onAbout,
   onHomeButton,
   showAbout = false,
@@ -105,6 +106,9 @@ const SuccessPage = ({
           </h3>
           <h3 className="text-md sm:text-xl mb-8">
             Target Phrase: {currentPhrase}
+          </h3>
+          <h3 className="text-md sm:text-xl mb-8" style={{ maxWidth: '400px', overflowWrap: 'break-word' }}>
+            Full Model Response: {modelResponse}
           </h3>
         </div>
         <div className="flex gap-4 mb-8">

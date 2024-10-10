@@ -25,6 +25,7 @@ const Home = () => {
   const [successTime, setSuccessTime] = useState(null);
   const [currentPhrase, setCurrentPhrase] = useState(null);
   const [currentModel, setCurrentModel] = useState(null);
+  const [modelResponse, setModelResponse] = useState(null);
   const [sessionId, setSessionId] = useState(null);
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(isLoggedIn());
   const [sessionWritten, setSessionWritten] = useState(false);
@@ -119,8 +120,9 @@ const Home = () => {
     setSessionWritten(false);
   };
 
-  const handleSuccess = timeTaken => {
+  const handleSuccess = (timeTaken, modelResponse) => {
     setSuccessTime(timeTaken);
+    setModelResponse(modelResponse);
     setPage("loading");
   };
 
@@ -241,6 +243,7 @@ const Home = () => {
           sessionId={sessionId}
           currentModel={currentModel}
           currentPhrase={currentPhrase}
+          modelResponse={modelResponse}
           timeTaken={TIMER_DURATION - successTime}
           onLogin={isUserLoggedIn ? handleLogout : showLoginPage}
           onAbout={handleAbout}
