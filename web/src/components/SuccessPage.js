@@ -107,7 +107,7 @@ const SuccessPage = ({
           <h3 className="text-md sm:text-xl mb-8">
             Target Phrase: {currentPhrase}
           </h3>
-          <h3 className="text-md sm:text-xl mb-8" style={{ maxWidth: '400px', overflowWrap: 'break-word' }}>
+          <h3 className="text-md sm:text-sm mb-8 max-w-[70%] break-words mx-auto text-left pb-2">
             Full Model Response: {modelResponse}
           </h3>
         </div>
