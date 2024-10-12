@@ -29,5 +29,10 @@ jobs:
       - name: 🧪 Test with pytest
         env:
           SECRET_KEY: ${{ secrets.SECRET_KEY }}  # Inject the SECRET_KEY from GitHub secrets
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}  
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }} 
+          FIREWORKS_API_KEY: ${{ secrets.FIREWORKS_API_KEY }}  
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  
+          ENV: ${{ secrets.ENV }} 
         run: |
           pytest backend/test/main.py -v
