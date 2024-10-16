@@ -52,7 +52,7 @@ Alembic is a database migration tool for SQLAlchemy. It allows you to:
 - Apply and revert these changes in a controlled manner
 - Manage different versions of your database schema across different environments
 
-[read more](./alembic/README.md)
+Important: you have to follow instructions [here](./alembic/README.md) to setup the database.
 
 Finally, execute the following from a fresh conda environment:
 ```bash
