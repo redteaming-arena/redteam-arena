@@ -59,11 +59,6 @@ const RulesPage = ({
           <h3 className="text-lg sm:text-xl md:text-2xl mb-8 sm:mb-12">
             THE FASTER, THE BETTER.
           </h3>
-          <a href={"https://twitter.com/elder_plinius"} className="mb-6">
-            <Badge className="text-xs bg-red-500 hover:bg-red-500">
-              created by @elder_plinius
-            </Badge>
-          </a>
 
           <AlertDialogWarning onStart={onStart}>
             <NavButton
