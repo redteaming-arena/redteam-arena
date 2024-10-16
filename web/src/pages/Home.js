@@ -94,7 +94,6 @@ const Home = () => {
 
   const startCountdown = async () => {
     try {
-      // console.log("TOKEN COUNTDOWN", getToken());
       const data = await createGame();
       setSessionId(data.session_id);
       setCurrentPhrase(data.target_phrase);
@@ -128,7 +127,7 @@ const Home = () => {
     let data;
     try {
       data = await login(username, password);
-      // console.log("TOKEN:", data);
+      console.log("DATA:", data)
       setToken(data.access_token);
       setIsUserLoggedIn(true);
       setPage("rules");

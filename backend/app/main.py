@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, games, leaderboard, users
 from app.core.config import settings
 
-app = FastAPI(title=settings.PROJECT_NAME)
+app = FastAPI(title=settings.PROJECT_NAME, docs_url=None)
 
 # Configure CORS
 app.add_middleware(
