@@ -34,9 +34,11 @@ The database schema includes the following tables:
    pip install alembic sqlalchemy
    ```
 
-2. Initialize the database:
+2. Run these commands to initialize the database:
 
    ```
+   alembic init alembic
+   alembic revision --autogenerate -m "Create Game Session Table"
    alembic upgrade head
    ```
 
