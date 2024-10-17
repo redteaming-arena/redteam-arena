@@ -9,7 +9,7 @@ from app.core.config import settings
 
 load_dotenv()
 
-app = FastAPI(title=settings.PROJECT_NAME)
+app = FastAPI(title=settings.PROJECT_NAME, docs_url="/docs" if os.environ.get("ENV") == "DEV" else None)
 
 # Configure CORS
 app.add_middleware(
