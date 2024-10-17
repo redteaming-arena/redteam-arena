@@ -42,7 +42,7 @@ npm run start
 ### Backend
 
 To start the backend, follow these instructions.
-First, modify line 13 of `/backend/main.py` to read `allow_origins=["*"],`.
+First, modify `/backend/app/core/config.py` to `allow_origins=["*"],` or you can `export ENV=DEV`.
 
 #### Alembic Setup and Usage Guide
 
