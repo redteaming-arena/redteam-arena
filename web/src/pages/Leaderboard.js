@@ -11,7 +11,7 @@ export default function Leaderboard() {
   const convertData = (obj, type, deltaObj) => {
     return Object.entries(obj).map(([key, value], index) => ({
       id: (index + 1).toString(),
-      name: key.replace(`${type}_`, ""),
+      name: key.includes("@") ? key.split("@")[0] : key.replace(`${type}_`, ""),
       score: value.toFixed(4),
       improved: deltaObj[key] > 0.0 ? 1 : deltaObj[key] < 0.0 ? -1 : 0,
     }));
