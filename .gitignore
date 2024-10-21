@@ -6,3 +6,5 @@ backend/app/data/
 **/__pycache__/
 **/*.pyc
 .venv/
+sql_redarena.db
+alembic/versions/

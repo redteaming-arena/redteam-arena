@@ -11,3 +11,15 @@ uvicorn app.main:app --reload
 ```
 
 3. Backend docs will be available at http://localhost:8000/docs
+
+
+### How to run test
+
+After you install the dependencies run pytest
+
+```bash
+pytest test/main.py -v
+```
+
+
+

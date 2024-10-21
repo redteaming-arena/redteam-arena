@@ -238,9 +238,13 @@ async def get_chat_history(current_user: str = Depends(get_current_user), db: Se
             if filename.endswith('.json'):
                 file_path = os.path.join(dirpath, filename)
                 with open(file_path, 'r') as file:
-                    session_data = json.load(file)
+                    try:
+                        session_data = json.load(file)
+                    except:
+                        print(file_path)
+                        continue
                     # Check if the game is completed (not ongoing)
-                    if session_data['state'] != 'ongoing':
+                    if session_data['state'] in ["win", "loss"]:
                         completed_sessions.append({
                             'session_id': session_data['session_id'],
                             'target_phrase': session_data['target_phrase'],
@@ -336,10 +340,11 @@ async def forfeit_session(
     current_username = await get_current_user(username)
 
     game_session = db.query(GameSession).filter(
+        GameSession.state == GameState.PLAYING,
         GameSession.session_id == str(session_id),
-        GameSession.username == current_username
+        GameSession.username == current_username,
     ).first()
-    
+
     if game_session is None:
         raise HTTPException(status_code=404, detail="Game session not found")
     
@@ -360,6 +365,7 @@ async def forfeit_session(
 
 @router.post("/write_session")
 async def write_session(
+
     background : BackgroundTasks,
     session_id: UUID,
     current_user: str = Depends(get_current_user),
@@ -369,13 +375,25 @@ async def write_session(
     
     game_session = db.query(GameSession).filter(
         GameSession.session_id == str(session_id),
-        GameSession.username == current_user
+        GameSession.username == current_user,
     ).first()
     
     if not game_session:
         raise HTTPException(status_code=404, detail="Game session not found")
-    if game_session.state == GameState.PLAYING:
+    
+    if game_session.state in [GameState.LOSS, GameState.FORFEIT]:
+        raise HTTPException(status_code=404, detail="Game already written")
+    elif game_session.state == GameState.WIN:
+        # NOTE I don't like this solution because I to search the fs, which is not an ideal :/
+        dir_path = f"db/json/{current_user}"
+        for _, _, files in os.walk(dir_path):
+            for file in files:
+                if str(session_id) in file:  # Check if session_id is part of the file name
+                    raise HTTPException(status_code=404, detail="Game already written")
+    else:
         game_session.state = GameState.LOSS
+
+
     try:
         db.add(game_session)
         db.commit()

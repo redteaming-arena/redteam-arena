@@ -1,7 +1,5 @@
 from __future__ import annotations
 import os
-import openai
-# import google.generativeai as genai
 
 import random
 from typing import Optional
@@ -17,7 +15,6 @@ load_dotenv()
 
 __all__ = ["sampler", "ClientProtocol"]
 
-# GOOGLE_MODELS = genai.list_models()
 OPENAI_MODELS = [
     {"endpoint": "gpt-4o", "name": "gpt-4o"},
     {"endpoint": "gpt-4o-mini", "name": "gpt-4o-mini"},

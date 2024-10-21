@@ -1,11 +1,15 @@
-# app/main.py
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
 from app.api import auth, games, leaderboard, users
 from app.core.config import settings
 
-app = FastAPI(title=settings.PROJECT_NAME, docs_url=None)
+load_dotenv()
+
+app = FastAPI(title=settings.PROJECT_NAME, docs_url="/docs" if os.environ.get("ENV") == "DEV" else None)
 
 # Configure CORS
 app.add_middleware(

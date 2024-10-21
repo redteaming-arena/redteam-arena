@@ -25,6 +25,7 @@ const NavBar = ({
       ? [{ text: "HISTORY", onClick: () => navigate("/history") }]
       : [{ text: "REGISTER", onClick: onRegisterButton }]),
     ...(showAbout ? [{ text: "ABOUT", onClick: onAbout }] : []),
+    { text: "GITHUB", onClick: () => window.open("https://github.com/redteaming-arena/redteam-arena", "_blank").focus() },
   ];
 
   return (
