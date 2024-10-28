@@ -9,12 +9,19 @@ export default function Leaderboard() {
   const navigate = useNavigate();
 
   const convertData = (obj, type, deltaObj) => {
-    return Object.entries(obj).map(([key, value], index) => ({
-      id: (index + 1).toString(),
-      name: key.includes("@") ? key.split("@")[0] : key.replace(`${type}_`, ""),
-      score: value.toFixed(4),
-      improved: deltaObj[key] > 0.0 ? 1 : deltaObj[key] < 0.0 ? -1 : 0,
-    }));
+    const emailPattern = /^(.*?)(@gmail\.com|@yahoo\.com|@hotmail\.com|@outlook\.com|@icloud\.com)?$/;
+    
+    return Object.entries(obj).map(([key, value], index) => {
+      const match = key.match(emailPattern);
+      const name = match ? match[1] : key;
+      
+      return {
+        id: (index + 1).toString(),
+        name,
+        score: value.toFixed(4),
+        improved: deltaObj[key] > 0.0 ? 1 : deltaObj[key] < 0.0 ? -1 : 0,
+      };
+    });
   };
 
   useEffect(() => {
