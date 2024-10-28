@@ -10,7 +10,7 @@ export default function Leaderboard() {
 
   const convertData = (obj, type, deltaObj) => {
     const emailPattern = /^(.*?)(@gmail\.com|@yahoo\.com|@hotmail\.com|@outlook\.com|@icloud\.com)?$/;
-    
+
     return Object.entries(obj).map(([key, value], index) => {
       const match = key.match(emailPattern);
       const name = match ? match[1] : key;
