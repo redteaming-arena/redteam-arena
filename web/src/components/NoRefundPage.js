@@ -6,7 +6,7 @@ import { Badge } from "./ui/badge";
 import NavBar from "./Navagation";
 import { AlertDialogWarning } from "./Alert";
 
-const RulesPage = ({
+const NoRefundPage = ({
   onStart,
   onLoginButton,
   onRegisterButton,
@@ -51,7 +51,7 @@ const RulesPage = ({
         </Badge>        
         <div className="h-[80vh] flex flex-col items-center justify-center text-center w-full max-w-6xl mx-auto">
           <div className="w-full mb-8">
-            <CyberpunkText text="BAD WORDS" />
+            <CyberpunkText text="NO REFUND" />
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-4 sm:mb-10">
             YOU HAVE ONE MINUTE TO JAILBREAK THE MODEL.
@@ -75,4 +75,4 @@ const RulesPage = ({
   );
 };
 
-export default RulesPage;
+export default NoRefundPage;

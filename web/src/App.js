@@ -9,6 +9,8 @@ import Leaderboard from "./pages/Leaderboard";
 import Profile from "./pages/Profile";
 import Footer from "./components/Footer";
 import Terms from "./pages/Terms";
+import Landing from "./pages/Landing";
+import NoRefund from "./pages/NoRefund";
 
 const Error404 = () => {
   return <>404</>;
@@ -18,7 +20,10 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* <Route path="/" element={<Home />} /> */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/BadWords" element={<Home />} />
+        <Route path="/NoRefund" element={<NoRefund />} />
         <Route path="/history" element={<History />}>
           <Route path=":session_id" element={<History />} />
         </Route>

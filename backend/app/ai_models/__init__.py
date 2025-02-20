@@ -36,8 +36,8 @@ FIREWORKS_MODELS = [
 
 class AIModelSampler:
     def __init__(self):
-        self.providers = ["openai", "anthropic", "google", "fireworks"]
-        # self.providers = ["openai"]
+        # self.providers = ["openai", "anthropic", "google", "fireworks"]
+        self.providers = ["openai"]
         self.model_map = {
             "openai" : OPENAI_MODELS,
             "anthropic" : ANTHROPIC_MODELS,
