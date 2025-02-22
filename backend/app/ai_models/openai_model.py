@@ -1,6 +1,7 @@
 from openai import OpenAI, models
 from abc import ABC, abstractmethod
 from typing import Any, List, Dict, Iterable, Callable
+import json
 
 NO_REFUND_FUNCTION = {
     "name": "issue_refund",
@@ -38,7 +39,20 @@ class OpenAIClient:
             )
         
         for chunk in response:
-            yield chunk.choices[0].delta.content
+            delta = chunk.choices[0].delta
+            if delta.content is not None:
+                content = str(delta.content)
+                #print(f"Yielding Content: {content}")
+                yield content
+            elif hasattr(delta, 'function_call') and delta.function_call is not None:
+                function_data = {
+                    "function_call": {
+                        "name": delta.function_call.name,
+                        "arguments": delta.function_call.arguments
+                    }
+                }
+                #print(f"Yielding Function Call: {function_data}")
+                yield json.dumps(function_data)
 
     def __call__(self, *args: Any, **kwds: Any) -> Iterable:
         return self.generate(*args, **kwds)

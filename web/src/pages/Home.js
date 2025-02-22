@@ -16,7 +16,7 @@ import {
 import { removeToken, getToken, setToken, isLoggedIn } from "../services/auth";
 import LoadingScreen from "../components/LoadingScreen";
 
-const TIMER_DURATION = 60; // 1 minute TODO: CHANGE.
+const TIMER_DURATION = 3; // 1 minute TODO: CHANGE.
 
 const Home = () => {
   const [page, setPage] = useState("rules");
@@ -52,18 +52,33 @@ const Home = () => {
 
   useEffect(() => {
     if (page === "loading" && !sessionWritten) {
-      const data = writeSession(sessionId);
-      data
-        .then(res => {
-          setPage(res.state === "win" ? "success" : "failure");
-        })
-        .catch(err => {
-          console.error(err);
-        });
-
-      setSessionWritten(true);
+      if (!sessionId) {
+        console.error("Session ID is null, skipping writeSession");
+        setPage("failure");
+        return;
+      }
+  
+      const sendWriteSession = async () => {
+        try {
+          const res = await writeSession(sessionId);
+          console.log("Session Response:", res);
+          
+          if (!res || typeof res !== "object" || !("state" in res)) {
+            throw new Error("Invalid response from writeSession");
+          }
+          
+          setSessionWritten(true);
+          setPage(res.state.toLowerCase().trim() === "win" ? "success" : "failure");
+        } catch (err) {
+          console.error("Failed to write session:", err);
+          setSessionWritten(true);
+          setPage("failure");
+        }
+      };
+  
+      sendWriteSession();
     }
-  }, [page]);
+  }, [page, sessionId, sessionWritten]);
 
   useEffect(() => {
     const loggedToken = getToken();
@@ -236,6 +251,7 @@ const Home = () => {
           showAbout={showAbout} // Set to false to hide the About button
           onHomeButton={onHomeButton}
           isUserLoggedIn={isUserLoggedIn}
+          game="norefund"
         />
       )}
       {page === "success" && (
@@ -251,6 +267,7 @@ const Home = () => {
           showAbout={showAbout} // Set to false to hide the About button
           onHomeButton={onHomeButton}
           idUserLoggedIn={isUserLoggedIn}
+          game="badwords"
         />
       )}
       {page === "loading" && <LoadingScreen />}

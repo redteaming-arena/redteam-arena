@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import NoRefundPage from "../components/NoRefundPage";
 import CountdownPage from "../components/CountdownPage";
-import ChatbotPage from "../components/ChatbotPage";
+import ChatbotPageNoRefund from "../components/ChatbotPageNoRefund";
 import FailurePage from "../components/FailurePage";
 import SuccessPage from "../components/SuccessPage";
 import LoginPage from "../components/LoginPage";
@@ -16,7 +16,7 @@ import {
 import { removeToken, getToken, setToken, isLoggedIn } from "../services/auth";
 import LoadingScreen from "../components/LoadingScreen";
 
-const TIMER_DURATION = 60; // 1 minute TODO: CHANGE.
+const TIMER_DURATION = 100; // 1 minute TODO: CHANGE.
 
 const NoRefund = () => {
   const [page, setPage] = useState("rules");
@@ -52,18 +52,21 @@ const NoRefund = () => {
 
   useEffect(() => {
     if (page === "loading" && !sessionWritten) {
-      const data = writeSessionNoRefund(sessionId);
-      data
-        .then(res => {
+      const writeSession = async () => {
+        try {
+          const res = await writeSessionNoRefund(sessionId);
+          setSessionWritten(true);
           setPage(res.state === "win" ? "success" : "failure");
-        })
-        .catch(err => {
-          console.error(err);
-        });
-
-      setSessionWritten(true);
+        } catch (err) {
+          console.error("Failed to write session:", err);
+          setSessionWritten(true);
+          setPage("failure");
+        }
+      };
+      
+      writeSession();
     }
-  }, [page]);
+  }, [page, sessionId, sessionWritten]);
 
   useEffect(() => {
     const loggedToken = getToken();
@@ -206,7 +209,7 @@ const NoRefund = () => {
         />
       )}
       {page === "chat" && (
-        <ChatbotPage
+        <ChatbotPageNoRefund
           timeLeft={timeLeft}
           onSuccess={handleSuccess}
           model={currentModel}
@@ -226,6 +229,7 @@ const NoRefund = () => {
           showAbout={false} // Set to false to hide the About button
           onHomeButton={onHomeButton}
           isUserLoggedIn={isUserLoggedIn}
+          game="norefund"
         />
       )}
       {page === "success" && (
@@ -241,6 +245,7 @@ const NoRefund = () => {
           showAbout={false} // Set to false to hide the About button
           onHomeButton={onHomeButton}
           idUserLoggedIn={isUserLoggedIn}
+          game="norefund"
         />
       )}
       {page === "loading" && <LoadingScreen />}

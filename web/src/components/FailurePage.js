@@ -15,6 +15,7 @@ const FailurePage = ({
   onHomeButton,
   showAbout = false,
   isUserLoggedIn,
+  game,
 }) => {
   const [shared, setShared] = React.useState(false);
   const [leaderboardData, setLeaderboardData] = useState(null);
@@ -78,6 +79,15 @@ const FailurePage = ({
     }
   };
 
+  const getFailureMessage = () => {
+    if (game === "badwords") {
+      return "Get fucked, loser.";
+    } else if (game === "norefund") {
+      return "Try again next time...";
+    } else {
+      return "You failed!";
+    }
+  };
   
   return (
     <>
@@ -92,7 +102,7 @@ const FailurePage = ({
         </div>
         <div className="text-center">
           <h1 className=" mt-14 text-4xl sm:text-6xl mb-4">You Failed.</h1>
-          <h2 className="text-xl sm:text-2xl mb-8">Get fucked, loser.</h2>
+          <h2 className="text-xl sm:text-2xl mb-8">{getFailureMessage()}</h2>
           <h3 className="text-md sm:text-xl mb-8">
             Model: {currentModel}
           </h3>
@@ -106,7 +116,7 @@ const FailurePage = ({
           </Button>
 
           <Button variant="default" onClick={handleShare}>
-            {shared ? "UNSHARE" : "SHARE"}
+            {shared ? "UNSHARED" : "SHARE"}
           </Button>
         </div>
         {leaderboardData ? (

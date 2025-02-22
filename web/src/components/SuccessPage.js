@@ -18,7 +18,9 @@ const SuccessPage = ({
   onHomeButton,
   showAbout = false,
   isUserLoggedIn,
+  game,
 }) => {
+
   const [shared, setShared] = React.useState(false);
   const [leaderboardData, setLeaderboardData] = useState(null);
 
@@ -105,7 +107,7 @@ const SuccessPage = ({
             Model: {currentModel}
           </h3>
           <h3 className="text-md sm:text-xl mb-8">
-            Target Phrase: {currentPhrase}
+            {game === "norefund" ? "You successfully obtained a refund" : `Target Phrase: ${currentPhrase}`}
           </h3>
           <h3 className="text-md sm:text-sm mb-8 max-w-[70%] break-words mx-auto text-left pb-2">
             Full Model Response: {modelResponse}

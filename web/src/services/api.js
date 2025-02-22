@@ -324,6 +324,69 @@ export const gameStreamEvent = (sessionId, userInput) => {
   };
 };
 
+// Standard API Call for NoRefund
+export const gameChatNoRefund = async (sessionId, userInput) => {
+  const response = await fetch(
+    `${API_URL}/api/game/chat-norefund?session_id=${sessionId}&user_input=${encodeURIComponent(userInput)}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+  return handleResponse(response);
+};
+
+// Streaming API for NoRefund
+export const gameStreamEventNoRefund = (sessionId, userInput) => {
+  const url = `${API_URL}/api/game/chat-norefund?session_id=${sessionId}&user_input=${encodeURIComponent(userInput)}`;
+
+  return {
+    subscribe: callbacks => {
+      const controller = new AbortController();
+      const connect = () => {
+        fetchEventSource(url, {
+          method: "POST",
+          headers: {
+            Accept: "text/event-stream",
+            Authorization: `Bearer ${getToken()}`,
+          },
+          signal: controller.signal,
+
+          onopen(response) {
+            if (response.ok && response.status === 200) {
+              if (callbacks.onopen) callbacks.onopen();
+            } else {
+              throw new Error(
+                `Failed to open connection: ${response.status} ${response.statusText}`
+              );
+            }
+          },
+          onmessage(event) {
+            if (callbacks.onmessage) callbacks.onmessage(event);
+          },
+          onclose() {
+            if (callbacks.onclose) callbacks.onclose();
+          },
+          onerror(err) {
+            console.warn("EventSource failed:", err);
+            if (callbacks.onerror) callbacks.onerror(err);
+          },
+        });
+      };
+
+      connect();
+
+      return {
+        close: () => {
+          controller.abort();
+        },
+      };
+    },
+  };
+};
+
 export const getChatHistory = async sessionId => {
   const response = await fetch(`${API_URL}/api/game/history/${sessionId}`, {
     headers: {
@@ -366,7 +429,7 @@ export const writeSession = async sessionId => {
     }
 
     const data = await response.json();
-    // console.log("Server response:", data);
+    console.log("Server response:", data);
     return data;
   } catch (error) {
     console.error("Error in writeSession:", error);
@@ -387,7 +450,7 @@ export const writeSessionNoRefund = async sessionId => {
       throw new Error("Session ID is required");
     }
 
-    const url = new URL(`${API_URL}/api/chat-norefund`);
+    const url = new URL(`${API_URL}/api/game/write_session`);
     url.searchParams.append("session_id", sessionId);
 
     const response = await fetch(url, {
