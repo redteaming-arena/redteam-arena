@@ -72,6 +72,7 @@ const ChatbotPage = ({
           },
           onmessage: event => {
             const data = JSON.parse(event.data);
+            console.log("Received chunk:", data.model_response);
 
             if (event.event === "end") {
               // Handle end of stream
@@ -94,7 +95,7 @@ const ChatbotPage = ({
             }
 
             setCurrentStreamedMessage(prevMessage => {
-              const updatedMessage = prevMessage + data.model_response;
+              const updatedMessage = prevMessage + (data.model_response || '');
               currentStreamedMessageRef.current = updatedMessage;
               return updatedMessage;
             });

@@ -29,7 +29,7 @@ const CyberpunkText = ({ text = "CYBERPUNK" }) => {
       ctx.clearRect(0, 0, dimensions.width, dimensions.height);
 
       // Calculate font size based on canvas width
-      const fontSize = Math.max(20, Math.floor(dimensions.width / 15)); // Minimum 20px, adjust divisor as needed
+      const fontSize = Math.max(20, Math.floor(dimensions.width / 16)); // Minimum 20px, adjust divisor as needed
 
       // Main text
       ctx.font = `bold ${fontSize}px "Courier New", Courier, "Lucida Console", Monaco, monospace`;
