@@ -19,6 +19,7 @@ const SuccessPage = ({
   showAbout = false,
   isUserLoggedIn,
   game,
+  timer_duration,
 }) => {
 
   const [shared, setShared] = React.useState(false);
@@ -101,7 +102,7 @@ const SuccessPage = ({
             You're a master of persuasion.
           </h2>
           <h3 className="text-md sm:text-xl mb-8">
-            Broken in {60 - Math.max(0, timeTaken)} seconds
+            Broken in {timer_duration - Math.max(0, timeTaken)} seconds
           </h3>
           <h3 className="text-md sm:text-xl mb-8">
             Model: {currentModel}
