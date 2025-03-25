@@ -268,6 +268,7 @@ const Home = () => {
           onHomeButton={onHomeButton}
           idUserLoggedIn={isUserLoggedIn}
           game="badwords"
+          timer_duration={TIMER_DURATION}
         />
       )}
       {page === "loading" && <LoadingScreen />}

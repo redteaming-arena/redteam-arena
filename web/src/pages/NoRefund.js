@@ -246,6 +246,7 @@ const NoRefund = () => {
           onHomeButton={onHomeButton}
           idUserLoggedIn={isUserLoggedIn}
           game="norefund"
+          timer_duration={TIMER_DURATION}
         />
       )}
       {page === "loading" && <LoadingScreen />}
