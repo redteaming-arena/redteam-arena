@@ -16,7 +16,7 @@ import {
 import { removeToken, getToken, setToken, isLoggedIn } from "../services/auth";
 import LoadingScreen from "../components/LoadingScreen";
 
-const TIMER_DURATION = 100; // 1 minute TODO: CHANGE.
+const TIMER_DURATION = 120; // 1 minute TODO: CHANGE.
 
 const NoRefund = () => {
   const [page, setPage] = useState("rules");
