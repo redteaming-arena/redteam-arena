@@ -46,8 +46,8 @@ class AIModelSampler:
         }
         self.clients_map = {
             "openai": OpenAIClient(api_key=os.getenv("OPENAI_API_KEY")),
-            "anthropic": AnthropicClient(api_key=os.getenv("ANTHROPIC_API_KEY")),
-            "google": GeminiClient(api_key=os.getenv("GEMINI_API_KEY")),
+            "anthropic": AnthropicClient(...),
+            "google": GeminiClient(...),
             "fireworks": OpenAIClient(
                 api_key=os.getenv("FIREWORKS_API_KEY"),
                 base_url="https://api.fireworks.ai/inference/v1"
@@ -76,6 +76,15 @@ class AIModelSampler:
         return None
 
     def get_client(self, provider: str) -> Optional[object]:
+        if provider == "anthropic":
+            return AnthropicClient(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        if provider == "google":
+            return GeminiClient(api_key=os.getenv("GEMINI_API_KEY"))
+        if provider == "fireworks":
+            return OpenAIClient(
+                api_key=os.getenv("FIREWORKS_API_KEY"),
+                base_url="https://api.fireworks.ai/inference/v1"
+            )
         return self.clients_map.get(provider)
 
 
