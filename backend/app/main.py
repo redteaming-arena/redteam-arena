@@ -9,11 +9,11 @@ from app.database import Base, engine
 
 load_dotenv()
 
+app = FastAPI(title=settings.PROJECT_NAME, docs_url="/docs" if os.environ.get("ENV") == "DEV" else None)
+
 @app.on_event("startup")
 def create_local_db():
     Base.metadata.create_all(bind=engine)
-
-app = FastAPI(title=settings.PROJECT_NAME, docs_url="/docs" if os.environ.get("ENV") == "DEV" else None)
 
 # Configure CORS
 app.add_middleware(

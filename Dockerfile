@@ -20,10 +20,12 @@ RUN npm run build
 RUN apt-get install -y python3 python3-pip
 COPY alembic.ini /app/alembic.ini
 COPY ./backend /app/backend
+COPY ./alembic /app/alembic
 WORKDIR /app/backend
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # IMPORT EVERYTHING ELSE
 WORKDIR /app
+ENV PYTHONPATH=/app/backend
 CMD ["sh", "-c", "alembic upgrade head && uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT"]
