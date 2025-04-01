@@ -24,5 +24,5 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # IMPORT EVERYTHING ELSE
-WORKDIR /app/backend/app
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
+WORKDIR /app/backend
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
