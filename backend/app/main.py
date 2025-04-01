@@ -1,4 +1,3 @@
-
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,8 +5,13 @@ from dotenv import load_dotenv
 
 from app.api import auth, games, leaderboard, users
 from app.core.config import settings
+from app.database import Base, engine
 
 load_dotenv()
+
+@app.on_event("startup")
+def create_local_db():
+    Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=settings.PROJECT_NAME, docs_url="/docs" if os.environ.get("ENV") == "DEV" else None)
 
