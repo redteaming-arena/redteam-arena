@@ -25,4 +25,4 @@ RUN pip install -r requirements.txt
 
 # IMPORT EVERYTHING ELSE
 WORKDIR /app/backend
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
+CMD ["sh", "-c", "alembic -c backend/alembic.ini upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"]
