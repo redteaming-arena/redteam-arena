@@ -8,9 +8,9 @@ import { AlertDialogWarning } from "./Alert";
 import Card from "./Card";
 import { Link } from "react-router-dom";
 
-import badwordsImg from "../assets/blue-circle-test.png";
-import noRefundImg from "../assets/blue-circle-test.png";
-import moreGamesImg from "../assets/blue-circle-test.png";
+import badwordsImg from "../assets/smiley.png";
+import noRefundImg from "../assets/refund.png";
+import moreGamesImg from "../assets/exclamation-mark.png";
 
 const LandingPage = ({
   onStart,
@@ -66,7 +66,7 @@ const LandingPage = ({
             <AlertDialogWarning onStart={onStart}>
               <Link to="/BadWords">
                 <Card
-                  frontImage={badwordsImg}
+                  frontImage={<img src={badwordsImg} className="filter brightness-0 invert" alt="BadWords" />}
                   frontText="BadWords"
                   backText="Can you get the model to say a bad word?"
                 />
@@ -78,7 +78,7 @@ const LandingPage = ({
             <AlertDialogWarning onStart={onStart}>
               <Link to="/NoRefund">
                 <Card
-                  frontImage={noRefundImg}
+                  frontImage={<img src={noRefundImg} className="filter brightness-0 invert" alt="NoRefund" />}
                   frontText="NoRefund"
                   backText="Can you game the refund policy?"
                 />
@@ -88,8 +88,8 @@ const LandingPage = ({
 
           <div className="col-span-1 ml-20">
             <Card
-              frontImage={moreGamesImg}
-              frontText="More games coming soon!"
+              frontImage={<img src={moreGamesImg} className="filter brightness-0 invert" alt="More games coming soon!" />}
+              frontText="More games soon!"
               backText="Stay tuned for exciting new challenges!"
             />
           </div>

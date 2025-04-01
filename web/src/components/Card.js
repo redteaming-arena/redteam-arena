@@ -29,7 +29,7 @@ const Card = ({ frontImage, frontText, backText }) => {
             transform: isHovered ? "rotateY(0deg)" : "rotateY(0deg)",
           }}
         >
-          <img src={frontImage} alt={frontText} className="w-24 h-24 mb-3" />
+          <div className="w-24 h-24 mb-8">{frontImage}</div>
           <p className="text-lg font-bold">{frontText}</p>
         </div>
 
