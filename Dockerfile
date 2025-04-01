@@ -7,7 +7,8 @@ RUN usermod -s /bin/bash root
 RUN apt-get update 
 
 #FRONTEND (NODE)
-RUN apt-get install -y nodejs npm
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
 COPY ./web /app/web
 WORKDIR /app/web
 RUN npm install
