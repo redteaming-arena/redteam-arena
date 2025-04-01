@@ -26,4 +26,4 @@ RUN pip install -r requirements.txt
 WORKDIR /app
 
 # IMPORT EVERYTHING ELSE
-ENTRYPOINT [ "tail", "-f", "/dev/null"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
