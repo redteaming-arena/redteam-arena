@@ -3,20 +3,15 @@ import LandingPage from "../components/LandingPage"; // Import the LandingPage c
 import LoginPage from "../components/LoginPage";
 import RegisterPage from "../components/RegisterPage";
 import { register, login } from "../services/api";
-import { setToken, getToken } from "../services/auth";
+import { setToken, getToken, removeToken } from "../services/auth";
 
 const Landing = () => {
   const [page, setPage] = useState("landing"); // Track current page (landing, login, register)
-  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
-
-  useEffect(() => {
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(() => {
     const token = getToken();
-    if (token && token !== "undefined") {
-      setToken(token);
-      setIsUserLoggedIn(true);
-    }
-  }, []);
+    return token && token !== "undefined" && token !== process.env.REACT_APP_DEV_LOGIN_TOKEN;
+  });
+  const [showAbout, setShowAbout] = useState(false);
 
   const handleRegister = async (username, password) => {
     try {
@@ -29,6 +24,13 @@ const Landing = () => {
       console.error("Registration or login failed:", err);
       alert("Registration or login failed. Please try again.");
     }
+  };
+
+  const handleLogout = () => {
+    removeToken();
+    setToken(process.env.REACT_APP_DEV_LOGIN_TOKEN);
+    setIsUserLoggedIn(false);
+    setPage("landing");
   };
 
   // Handling login button click
@@ -56,7 +58,7 @@ const Landing = () => {
       {page === "landing" && (
         <LandingPage
           onStart={() => console.log("Game starting...")} // Start game logic here
-          onLoginButton={handleLoginButton}
+          onLoginButton={isUserLoggedIn ? handleLogout : handleLoginButton}
           onRegisterButton={handleRegisterButton}
           onAbout={handleAbout}
           showAbout={showAbout}
