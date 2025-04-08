@@ -6,6 +6,7 @@ import FailurePage from "../components/FailurePage";
 import SuccessPage from "../components/SuccessPage";
 import LoginPage from "../components/LoginPage";
 import RegisterPage from "../components/RegisterPage";
+import InstructionPage from "../components/InstructionPage";
 import {
   register,
   login,
@@ -185,12 +186,18 @@ const NoRefund = () => {
     <div className="bg-black min-h-screen w-screen">
       {page === "rules" && (
         <NoRefundPage
-          onStart={startCountdown}
+          onStart={() => setPage("instruction")}
           onLoginButton={isUserLoggedIn ? handleLogout : showLoginPage}
           onRegisterButton={showRegisterPage}
           onAbout={handleAbout}
           showAbout={false} // Set to false to hide the About button
           isUserLoggedIn={isUserLoggedIn}
+        />
+      )}
+      {page === "instruction" && (
+        <InstructionPage
+          onContinue={startCountdown}
+          onBack={handleBack}
         />
       )}
       {page === "login" && (
