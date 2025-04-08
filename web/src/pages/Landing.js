@@ -1,14 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import LandingPage from "../components/LandingPage"; // Import the LandingPage component
 import LoginPage from "../components/LoginPage";
 import RegisterPage from "../components/RegisterPage";
 import { register, login } from "../services/api";
-import { setToken } from "../services/auth";
+import { setToken, getToken } from "../services/auth";
 
 const Landing = () => {
   const [page, setPage] = useState("landing"); // Track current page (landing, login, register)
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+
+  useEffect(() => {
+    const token = getToken();
+    if (token && token !== "undefined") {
+      setToken(token);
+      setIsUserLoggedIn(true);
+    }
+  }, []);
 
   const handleRegister = async (username, password) => {
     try {
