@@ -33,6 +33,19 @@ const Landing = () => {
     setPage("landing");
   };
 
+  const handleLogin = async (username, password) => {
+    let data;
+    try {
+      data = await login(username, password);
+      setToken(data.access_token);
+      setIsUserLoggedIn(true);
+      setPage("landing");
+    } catch (loginError) {
+      console.error("Login failed:", loginError);
+      alert(loginError);
+    }
+  };
+
   // Handling login button click
   const handleLoginButton = () => {
     setPage("login");
@@ -65,7 +78,7 @@ const Landing = () => {
           isUserLoggedIn={isUserLoggedIn}
         />
       )}
-      {page === "login" && <LoginPage onLogin={() => setIsUserLoggedIn(true)} onBack={handleBackToLanding} />}
+      {page === "login" && <LoginPage onLogin={handleLogin} onBack={handleBackToLanding} />}
       {page === "register" && <RegisterPage onRegister={handleRegister} onBack={handleBackToLanding} />}
     </div>
   );
