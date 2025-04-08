@@ -2,7 +2,21 @@ import React, { useState } from "react";
 import LandingPage from "../components/LandingPage"; // Import the LandingPage component
 import LoginPage from "../components/LoginPage";
 import RegisterPage from "../components/RegisterPage";
+import { register, login } from "../services/api";
+import { setToken } from "../services/auth";
 
+const handleRegister = async (username, password) => {
+  try {
+    await register(username, password);
+    const data = await login(username, password);
+    setToken(data.access_token);
+    setIsUserLoggedIn(true);
+    setPage("landing"); // or "rules" or wherever you want to redirect
+  } catch (err) {
+    console.error("Registration or login failed:", err);
+    alert("Registration or login failed. Please try again.");
+  }
+};
 const Landing = () => {
   const [page, setPage] = useState("landing"); // Track current page (landing, login, register)
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
@@ -41,7 +55,7 @@ const Landing = () => {
         />
       )}
       {page === "login" && <LoginPage onLogin={() => setIsUserLoggedIn(true)} onBack={handleBackToLanding} />}
-      {page === "register" && <RegisterPage onRegister={() => setIsUserLoggedIn(true)} onBack={handleBackToLanding} />}
+      {page === "register" && <RegisterPage onRegister={handleRegister} onBack={handleBackToLanding} />}
     </div>
   );
 };
