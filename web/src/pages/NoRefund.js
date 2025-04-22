@@ -56,15 +56,11 @@ const NoRefund = () => {
       const writeSession = async () => {
         try {
           const res = await writeSessionNoRefund(sessionId);
-          setSessionWritten(true);
-          if (res.state === "win") {
-            setPage("success");
-          } else if (res.state === "loss") {
-            setPage("failure");
-          } else {
-            // fallback: check state from history endpoint or delay decision
-            setPage("loading");
+          if (res.game_state && !res.state) {
+            res.state = res.game_state;
           }
+          setSessionWritten(true);
+          setPage(res.state === "win" ? "success" : "failure");
         } catch (err) {
           console.error("Failed to write session:", err);
           setSessionWritten(true);

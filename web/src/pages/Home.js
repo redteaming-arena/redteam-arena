@@ -62,26 +62,21 @@ const Home = () => {
         try {
           const res = await writeSession(sessionId);
           console.log("Session Response:", res);
-          
+          if (res.game_state && !res.state) {
+            res.state = res.game_state;
+          }
           if (!res || typeof res !== "object" || !("state" in res)) {
             throw new Error("Invalid response from writeSession");
           }
-          
           setSessionWritten(true);
-          if (res.state === "win") {
-            setPage("success");
-          } else if (res.state === "loss") {
-            setPage("failure");
-          } else {
-            setPage("loading");
-          }
+          setPage(res.state === "win" ? "success" : "failure");
         } catch (err) {
           console.error("Failed to write session:", err);
           setSessionWritten(true);
           setPage("failure");
         }
       };
-  
+
       sendWriteSession();
     }
   }, [page, sessionId, sessionWritten]);
