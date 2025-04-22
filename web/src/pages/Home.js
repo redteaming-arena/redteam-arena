@@ -68,7 +68,13 @@ const Home = () => {
           }
           
           setSessionWritten(true);
-          setPage(res.state.toLowerCase().trim() === "win" ? "success" : "failure");
+          if (res.state === "win") {
+            setPage("success");
+          } else if (res.state === "loss") {
+            setPage("failure");
+          } else {
+            setPage("loading");
+          }
         } catch (err) {
           console.error("Failed to write session:", err);
           setSessionWritten(true);

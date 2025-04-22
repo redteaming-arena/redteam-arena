@@ -57,7 +57,14 @@ const NoRefund = () => {
         try {
           const res = await writeSessionNoRefund(sessionId);
           setSessionWritten(true);
-          setPage(res.state === "win" ? "success" : "failure");
+          if (res.state === "win") {
+            setPage("success");
+          } else if (res.state === "loss") {
+            setPage("failure");
+          } else {
+            // fallback: check state from history endpoint or delay decision
+            setPage("loading");
+          }
         } catch (err) {
           console.error("Failed to write session:", err);
           setSessionWritten(true);
