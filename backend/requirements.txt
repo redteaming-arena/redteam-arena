@@ -20,3 +20,4 @@ numpy
 pandas
 google-generativeai
 python-dotenv
+firebase-admin

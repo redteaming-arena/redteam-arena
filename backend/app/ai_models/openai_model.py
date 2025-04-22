@@ -1,4 +1,4 @@
-from openai import OpenAI, models
+from openai import OpenAI
 from abc import ABC, abstractmethod
 from typing import Any, List, Dict, Iterable, Callable
 import json

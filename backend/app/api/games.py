@@ -13,53 +13,52 @@ from typing import AsyncGenerator, List
 from app.core.utils import DB_DIR
 from datetime import datetime
 from .targetPhraseList import targets
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-from app.database import get_db, GameSession, GameState
 import aiofiles
 import aiofiles.os
 import string
 from ..ai_models.openai_model import NO_REFUND_FUNCTION
+# Firestore
+from app.core.firestore import db
 
 UUID_LENGTH = 41
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+
 @router.post("/create", response_model=GameCreate)
-async def create_game(current_user: str = Depends(get_current_user), 
-                      db: Session = Depends(get_db)):
-    
+async def create_game(current_user: str = Depends(get_current_user)):
     session_id = str(uuid4())
     p = np.array(list(targets.values())).astype(float)
     p /= p.sum()
     target_phrase = np.random.choice(list(targets.keys()), p=p)
     provider = sampler.sample_provider()
     model = sampler.sample_model(provider)
-    
-    new_game = GameSession(
-        session_id=session_id,
-        username=current_user,  # Using username directly
-        state=GameState.PLAYING,
-        target_phrase=target_phrase,
-        provider=provider,
-        model=model["name"],
-        endpoint=model["endpoint"],
-        history=json.dumps([])  # Initialize with empty list
-    )
-    
-    db.add(new_game)
-    db.commit()
-    
-    logger.info(f"New game created for user: {current_user}, session_id: {session_id}, target_phrase: {target_phrase}, model: {model['name']}")
-    
-    return_dict = {"session_id": session_id, "target_phrase": target_phrase, "model": model["name"]}
-    return return_dict
+
+    game_data = {
+        "session_id": session_id,
+        "username": current_user,
+        "state": "ongoing",
+        "target_phrase": target_phrase,
+        "provider": provider,
+        "model": model["name"],
+        "endpoint": model["endpoint"],
+        "history": [],
+        "share": False,
+        "created_at": datetime.utcnow()
+    }
+
+    db.collection("badwords").document(session_id).set(game_data)
+
+    return {
+        "session_id": session_id,
+        "target_phrase": target_phrase,
+        "model": model["name"]
+    }
+
 
 @router.post("/create-norefund", response_model=GameCreate)
-async def create_norefund(current_user: str = Depends(get_current_user), 
-                               db: Session = Depends(get_db)):
-    
+async def create_norefund(current_user: str = Depends(get_current_user)):
     session_id = str(uuid4())
 
     policy = """
@@ -105,24 +104,28 @@ async def create_norefund(current_user: str = Depends(get_current_user),
     provider = sampler.sample_provider()
     model = sampler.sample_model(provider)
 
-    new_game = GameSession(
-        session_id=session_id,
-        username=current_user,
-        state=GameState.PLAYING,
-        target_phrase="NoRefund",  # NoRefund game target is always NoRefund
-        provider=provider,
-        model=model["name"],
-        endpoint=model["endpoint"],
-        history=json.dumps([{"role": "system", "content": scenario_message}])  # Initialize with the scenario
-    )
-    
-    db.add(new_game)
-    db.commit()
-    
-    logger.info(f"New NoRefund game created for user: {current_user}, session_id: {session_id}, scenario: {scenario}, model: {model['name']}")
-    
-    return_dict = {"session_id": session_id, "scenario": scenario, "model": model["name"], "target_phrase": "NoRefund",}
-    return return_dict
+    game_data = {
+        "session_id": session_id,
+        "username": current_user,
+        "state": "ongoing",
+        "provider": provider,
+        "model": model["name"],
+        "endpoint": model["endpoint"],
+        "policy": policy,
+        "scenario": scenario,
+        "history": [{"role": "system", "content": scenario_message}],
+        "share": False,
+        "created_at": datetime.utcnow()
+    }
+
+    db.collection("norefund").document(session_id).set(game_data)
+
+    return {
+        "session_id": session_id,
+        "scenario": scenario,
+        "model": model["name"],
+        "target_phrase": "NoRefund"
+    }
 
 def remove_punctuation(text):
     # Create a translation table that maps each punctuation character to None
@@ -132,85 +135,79 @@ def remove_punctuation(text):
     return text.translate(translator)
 
 
-#THIS IS WHERE THE GAME IS BEING DETERMINED TO BE WON OR NOT
 @router.post("/chat")
 async def game_chat(
     session_id: UUID = Query(..., description="The game session ID"),
     user_input: str = Query(..., description="The user's input message"),
-    db: Session = Depends(get_db),
     current_user: str = Depends(get_current_user),
 ):
-    
-    game : GameSession = db.query(GameSession).filter(GameSession.session_id == str(session_id),
-                                                      GameSession.username == current_user,
-                                                      GameSession.state == GameState.PLAYING).first()
-    if game is None:
+    doc_ref = db.collection("badwords").document(str(session_id))
+    doc = doc_ref.get()
+    if not doc.exists:
         raise HTTPException(status_code=404, detail="Game session not found")
-    
-    client = sampler.get_client(game.provider)
-    
-    # target = re.escape(game.target_phrase.lower())
-    # pattern = rf'\b{target}\b'
+
+    game = doc.to_dict()
+    if game["username"] != current_user or game["state"] != "ongoing":
+        raise HTTPException(status_code=403, detail="Unauthorized or inactive session")
+
+    client = sampler.get_client(game["provider"])
+    target_phrase = game["target_phrase"]
+    history = game.get("history", [])
+    state = game.get("state", "ongoing")
 
     async def generate_response() -> AsyncGenerator[str, None]:
-        nonlocal game
+        nonlocal history, state
         try:
             chunk_response = ""
-            state = game.state
-            history = game.history
-            if isinstance(history, str):
-                history = json.loads(history)
-            
             translator = str.maketrans('', '', string.punctuation)
-            removed_punctuation = game.target_phrase.translate(translator)
-            
+            removed_punctuation = target_phrase.translate(translator)
+
             history.append({"role": "user", "content": user_input})
-            for chunk in client.generate(history, game.endpoint, [NO_REFUND_FUNCTION]):
+            for chunk in client.generate(history, game["endpoint"], [NO_REFUND_FUNCTION]):
                 if chunk:
                     chunk_response += chunk
-                    if game.target_phrase.lower() in chunk_response.lower() or\
-                       removed_punctuation.lower() in chunk_response.lower():
-                        state = GameState.WIN
-                        
-                    yield f"event:message\ndata: {json.dumps({'model_response': chunk, 'game_state': state.value, 'target_phrase': game.target_phrase})}\n\n"
-            
-            game.state = state
-            history.append({"role": "assistant", "content": chunk_response})
-            game.history = json.dumps(history)
-            db.add(game)
-            db.commit()
-            yield f'event:end\ndata: {json.dumps({"model_response": chunk_response, "game_state": game.state.value, "target_phrase": game.target_phrase})}\n\n'
+                    if target_phrase.lower() in chunk_response.lower() or removed_punctuation.lower() in chunk_response.lower():
+                        state = "win"
 
+                    yield f"event:message\ndata: {json.dumps({'model_response': chunk, 'game_state': state, 'target_phrase': target_phrase})}\n\n"
+
+            history.append({"role": "assistant", "content": chunk_response})
+            doc_ref.update({
+                "history": history,
+                "state": state,
+                "ended_at": datetime.utcnow()
+            })
+            yield f"event:end\ndata: {json.dumps({'model_response': chunk_response, 'game_state': state, 'target_phrase': target_phrase})}\n\n"
         except Exception as e:
             logger.error(f"Error calling AI API: {str(e)}")
-            print("Error calling AI API:", str(e))
             obj = {
                 "model_response": "I'm sorry, I'm having trouble responding right now.",
-                "game_state": game.state.value,
-                "target_phrase": game.target_phrase,
+                "game_state": state,
+                "target_phrase": target_phrase,
             }
             yield f"event:end\ndata: {json.dumps(obj)}\n\n"
 
     return StreamingResponse(generate_response(), media_type="text/event-stream")
 
+
+
+# Firestore-based /chat-norefund endpoint (no SQLAlchemy dependency)
 @router.post("/chat-norefund")
 async def game_chat_norefund(
     session_id: UUID = Query(..., description="The game session ID"),
     user_input: str = Query(..., description="The user's input message"),
-    db: Session = Depends(get_db),
     current_user: str = Depends(get_current_user),
 ):
-    
-    game : GameSession = db.query(GameSession).filter(GameSession.session_id == str(session_id),
-                                                      GameSession.username == current_user,
-                                                      GameSession.state == GameState.PLAYING).first()
-    if game is None:
+    doc_ref = db.collection("norefund").document(str(session_id))
+    doc = doc_ref.get()
+    if not doc.exists:
         raise HTTPException(status_code=404, detail="Game session not found")
-    
-    client = sampler.get_client(game.provider)
-    
-    # target = re.escape(game.target_phrase.lower())
-    # pattern = rf'\b{target}\b'
+
+    game = doc.to_dict()
+    if game["username"] != current_user or game["state"] != "ongoing":
+        raise HTTPException(status_code=403, detail="Unauthorized or inactive session")
+
+    client = sampler.get_client(game["provider"])
 
     def issue_refund(confirmation_number, amount):
         print("Refund issued")
@@ -219,81 +216,55 @@ async def game_chat_norefund(
     async def generate_response() -> AsyncGenerator[str, None]:
         try:
             chunk_response = ""
-            state = game.state
-            history = game.history
-            if isinstance(history, str):
-                history = json.loads(history)
-
-            # For collecting function call data across chunks
+            state = game["state"]
+            history = game.get("history", [])
             current_function_name = None
             argument_chunks = []
 
             history.append({"role": "user", "content": user_input})
-            for chunk in client.generate(history, game.endpoint, [NO_REFUND_FUNCTION]):
-                print(f"Received chunk: {chunk}")
+            for chunk in client.generate(history, game["endpoint"], [NO_REFUND_FUNCTION]):
                 if chunk:
                     try:
                         chunk_data = json.loads(chunk)
-                        print(f"Chunk Data: {chunk_data}")
-                        
                         if "function_call" in str(chunk_data):
                             function_data = chunk_data["function_call"]
-                            
-                            # If we get a name, store it
                             if function_data.get("name"):
                                 current_function_name = function_data["name"]
-                            
-                            # Collect argument chunks
                             if "arguments" in function_data and function_data["arguments"]:
                                 argument_chunks.append(function_data["arguments"])
-                            
-                            # If we get a closing brace, that's likely the end of the JSON
                             if function_data.get("arguments") == "}":
-                                # Try to assemble and parse the complete arguments
                                 if current_function_name == "issue_refund":
                                     try:
                                         complete_args = "".join(argument_chunks)
-                                        print(f"Assembled arguments: {complete_args}")
-                                        
-                                        # Check if it looks like valid JSON
                                         if complete_args.startswith("{") and complete_args.endswith("}"):
                                             args = json.loads(complete_args)
                                             confirmation_number = args.get("confirmation_number")
                                             amount = args.get("amount", 0)
-                                            
                                             if confirmation_number and amount > 0:
                                                 issue_refund(confirmation_number, amount)
-                                                state = GameState.WIN
-                                                print(f"REFUND ISSUED: {amount} for {confirmation_number}")
-                                    except json.JSONDecodeError as e:
-                                        print(f"Failed to parse assembled arguments: {e}")
+                                                state = "win"
                                     except Exception as e:
                                         print(f"Error processing refund: {str(e)}")
-                                    
-                                    # Reset for potential future function calls
                                     current_function_name = None
                                     argument_chunks = []
-                                
                     except json.JSONDecodeError:
-                        # Not JSON, treat as content
                         chunk_response += chunk
-                    
-                    yield f"event:message\ndata: {json.dumps({'model_response': chunk, 'game_state': state.value, 'target_phrase': game.target_phrase})}\n\n"
 
-            game.state = state
+                    yield f"event:message\ndata: {json.dumps({'model_response': chunk, 'game_state': state})}\n\n"
+
             history.append({"role": "assistant", "content": chunk_response})
-            game.history = json.dumps(history)
-            db.add(game)
-            db.commit()
-            yield f'event:end\ndata: {json.dumps({"model_response": chunk_response, "game_state": game.state.value, "target_phrase": game.target_phrase})}\n\n'
+            doc_ref.update({
+                "history": history,
+                "state": state,
+                "ended_at": datetime.utcnow()
+            })
+            yield f'event:end\ndata: {json.dumps({"model_response": chunk_response, "game_state": state})}\n\n'
 
         except Exception as e:
             logger.error(f"Error calling AI API: {str(e)}")
-            print(f"Error calling AI API: {str(e)}")
             obj = {
                 "model_response": "I'm sorry, I'm having trouble responding right now.",
-                "game_state": game.state.value,
-                "target_phrase": game.target_phrase,
+                "game_state": game.get("state", "unknown"),
             }
             yield f"event:end\ndata: {json.dumps(obj)}\n\n"
 
@@ -302,136 +273,93 @@ async def game_chat_norefund(
 @router.post("/share/{session_id}")
 async def mark_session_as_shared(
     session_id: UUID,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: str = Depends(get_current_user)
 ):
     logger.info(f"{current_user} is marking session_id: {session_id} as shared")
-    folder_name = os.path.join(DB_DIR,current_user)
     session_id_str = str(session_id)
-    
-    game_session = db.query(GameSession).filter(GameSession.session_id == str(session_id)).first()
-    if not game_session:
+    # Try to find in badwords first
+    doc_ref = db.collection("badwords").document(session_id_str)
+    doc = doc_ref.get()
+    found_collection = "badwords" if doc.exists else None
+    if not doc.exists:
+        # Try norefund
+        doc_ref = db.collection("norefund").document(session_id_str)
+        doc = doc_ref.get()
+        found_collection = "norefund" if doc.exists else None
+    if not doc.exists:
         raise HTTPException(status_code=404, detail="Game session not found")
-    
-    if game_session.username != current_user:
+    game_data = doc.to_dict()
+    # Check if current user matches
+    print(game_data)
+    if game_data.get("username") != current_user:
         raise HTTPException(status_code=403, detail="Not authorized to modify this game")
-    
-    game_session.share = not game_session.share
-    db.add(game_session)
-    db.commit()
-
-    try:
-        matching_files = [f for f in os.listdir(folder_name) if session_id_str in f[-UUID_LENGTH:-4]]
-        
-        if not matching_files:
-            raise HTTPException(status_code=404, detail="Game session not found")
-        file_path = os.path.join(folder_name, matching_files[0])
-        game_data = {}
-        async with aiofiles.open(file_path, mode='r') as f:
-            content = await f.read()
-            game_data = json.loads(content)
-            # Check if the current user is authorized to modify this game
-            if game_data.get("username") != current_user:
-                raise HTTPException(status_code=403, detail="Not authorized to modify this game")
-            
-            # Set the share attribute to true
-            game_data["share"] = not game_data["share"]
-            
-            # Save the updated game_data back to the file
-            async with aiofiles.open(file_path, mode='w') as f_write:
-                content = json.dumps(game_data, indent=4)
-                await f_write.write(content)
-            
-            if game_data["share"]:
-                return {"message": "Session marked as shared successfully.", "path" : session_id_str, "shared" : game_data["share"]}
-            else:
-                return {"message": "Session marked as not shared successfully.", "shared" : game_data["share"]}
-
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Error decoding game data")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    # Toggle share
+    new_share = not game_data.get("share", False)
+    doc_ref.update({"share": new_share})
+    if new_share:
+        return {"message": "Session marked as shared successfully.", "path": session_id_str, "shared": new_share}
+    else:
+        return {"message": "Session marked as not shared successfully.", "shared": new_share}
 
 @router.get("/share/{session_id}")
 async def get_shared_chat_history(session_id: UUID):
-    
     session_id_str = str(session_id)
-    found = False
-    file_path = None
-
-    for current_folder, _, files in os.walk(DB_DIR):
-        for file_name in files:
-            if session_id_str in file_name[-UUID_LENGTH:-4]:  # Check if session_id matches file name
-                folder_name = current_folder
-                file_path = os.path.join(folder_name, file_name)
-                found = True
-                break
-        if found:
-            break
-    
-    if not found or not os.path.exists(file_path):
+    # Try badwords first
+    doc_ref = db.collection("badwords").document(session_id_str)
+    doc = doc_ref.get()
+    found_collection = "badwords" if doc.exists else None
+    if not doc.exists:
+        # Try norefund
+        doc_ref = db.collection("norefund").document(session_id_str)
+        doc = doc_ref.get()
+        found_collection = "norefund" if doc.exists else None
+    if not doc.exists:
         raise HTTPException(status_code=404, detail="Game session not found")
-
-    try:
-        async with aiofiles.open(file_path, mode='r') as f:
-            content = await f.read()
-            game_data : dict = json.loads(content)
-
-            if not game_data.get("share", False):
-                raise HTTPException(status_code=403, detail="You do not have read access to this game session")
-
-            chat_history =  game_data.get("chat_history", "[]")
-            if isinstance(chat_history, str):
-                chat_history = json.loads(chat_history)
-            # Return the game data
-            return {
-                "username": game_data.get("username"),
-                "state": game_data.get("state"),
-                "target_phrase": game_data.get("target_phrase"),
-                "chat_history": [
-                    message
-                    for message in chat_history
-                    if message.get("role", None) != "system"
-                ]
-            }
-
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="Error decoding game data")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    game_data = doc.to_dict()
+    if not game_data.get("share", False):
+        raise HTTPException(status_code=403, detail="You do not have read access to this game session")
+    # chat history field is "history" in both collections
+    chat_history = game_data.get("history", [])
+    # Remove system messages
+    filtered_history = [
+        message for message in chat_history
+        if message.get("role", None) != "system"
+    ]
+    # Compose response
+    result = {
+        "username": game_data.get("username"),
+        "state": game_data.get("state"),
+        "chat_history": filtered_history
+    }
+    # Only include target_phrase if it exists (badwords), norefund may not have it
+    if "target_phrase" in game_data:
+        result["target_phrase"] = game_data.get("target_phrase")
+    return result
 
 @router.get("/history", response_model=List[GameHistoryResponse])
-async def get_chat_history(current_user: str = Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_chat_history(current_user: str = Depends(get_current_user)):
     logger.info(f"{current_user} searches history")
-    folder_name = f"db/json/{current_user}"
-    
-    if not os.path.exists(folder_name):
-        raise HTTPException(status_code=404, detail="No chat history found for this user")
-    
-    completed_sessions = []
-    for dirpath, _, filenames in os.walk(folder_name):
-        for filename in filenames:
-            if filename.endswith('.json'):
-                file_path = os.path.join(dirpath, filename)
-                with open(file_path, 'r') as file:
-                    try:
-                        session_data = json.load(file)
-                    except:
-                        print(file_path)
-                        continue
-                    # Check if the game is completed (not ongoing)
-                    if session_data['state'] in ["win", "loss"]:
-                        completed_sessions.append({
-                            'session_id': session_data['session_id'],
-                            'target_phrase': session_data['target_phrase'],
-                            'state': session_data['state'],
-                            "shared": session_data.get("share", False)
-                        })
-    
-    # Sort completed sessions by session_id in descending order (newest first)
+
+    def fetch_user_sessions(collection_name):
+        # Query for sessions where username == current_user and state in ["win", "loss"]
+        # Firestore does not support "!=" directly, so we use "in" for ["win", "loss"].
+        sessions = []
+        for state in ["win", "loss"]:
+            query = db.collection(collection_name).where("username", "==", current_user).where("state", "==", state)
+            for doc in query.stream():
+                doc_dict = doc.to_dict()
+                session_entry = {
+                    'session_id': doc.id,
+                    'state': doc_dict.get("state"),
+                    'shared': doc_dict.get("share", False),
+                    'target_phrase': doc_dict.get("target_phrase", None)
+                }
+                sessions.append(session_entry)
+        return sessions
+
+    completed_sessions = fetch_user_sessions("badwords") + fetch_user_sessions("norefund")
+    # Sort by session_id descending (as string, so newest first if uuid4 used)
     completed_sessions.sort(key=lambda x: x['session_id'], reverse=True)
-    
-    # Return the completed sessions
     return completed_sessions
     
 
@@ -440,157 +368,141 @@ async def get_chat_history_session(
     session_id: UUID,
     current_user: str = Depends(get_current_user)
 ):
-    
-    folder_name = f"db/json/{current_user}"
     session_id_str = str(session_id)
-    completed_sessions = None
 
-    if not os.path.exists(folder_name):
-        raise HTTPException(status_code=404, detail="No chat history found for this user")
+    doc_ref = db.collection("badwords").document(session_id_str)
+    doc = doc_ref.get()
+    is_norefund = False
 
-    try:
-        matching_files = [f for f in os.listdir(folder_name) if session_id_str in f[-UUID_LENGTH:-4]]
-
-        if not matching_files:
+    if not doc.exists:
+        doc_ref = db.collection("norefund").document(session_id_str)
+        doc = doc_ref.get()
+        is_norefund = True
+        if not doc.exists:
             raise HTTPException(status_code=404, detail="Game session not found")
 
+    game_data = doc.to_dict()
 
-        file_path = os.path.join(folder_name, matching_files[0])
+    if game_data.get("username") != current_user:
+        raise HTTPException(status_code=403, detail="Not authorized to access this game")
 
-        # Iterate over all files in the user's folder
-        async with aiofiles.open(file_path, mode='r') as f:
-            content = await f.read()
-            game_data = json.loads(content)
+    if game_data.get("state") == "ongoing":
+        raise HTTPException(status_code=403, detail="Game is still ongoing")
 
-            # Check if the current user is authorized to access this game
-            if game_data["username"] != current_user:
-                raise HTTPException(status_code=403, detail="Not authorized to access this game")
+    chat_history = [
+        message for message in game_data.get("history", [])
+        if message.get("role") != "system"
+    ]
 
-            if game_data['state'] != 'ongoing':
-                chat_history =  game_data.get("chat_history", "[]")
-                if isinstance(chat_history, str):
-                    chat_history = json.loads(chat_history)
+    result = {
+        "username": game_data.get("username"),
+        "state": game_data.get("state"),
+        "chat_history": chat_history,
+        "shared": game_data.get("share", False),
+        "target_phrase": game_data.get("target_phrase") if not is_norefund else None
+    }
 
-                completed_sessions = {
-                    "username": game_data.get("username"),
-                    "state": game_data.get("state"),
-                    "target_phrase": game_data.get("target_phrase"),
-                    "chat_history": [
-                        message
-                        for message in chat_history
-                        if message.get("role", None) != "system"
-                    ],
-                    "shared" : game_data.get("share", False)
-                }
-    except json.JSONDecodeError:
-        
-        raise HTTPException(status_code=500, detail="Error decoding game data")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    return result
 
-    return completed_sessions
-
-async def write_session_to_file(username: str, session_id: UUID, game_data: dict):
+# async def write_session_to_file(username: str, session_id: UUID, game_data: dict):
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"db/json/{username}/{timestamp}_{session_id}.json"
+#     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#     filename = f"db/json/{username}/{timestamp}_{session_id}.json"
     
-    # Ensure the directory exists
-    directory = os.path.dirname(filename)
-    await aiofiles.os.makedirs(directory, exist_ok=True)
+#     # Ensure the directory exists
+#     directory = os.path.dirname(filename)
+#     await aiofiles.os.makedirs(directory, exist_ok=True)
     
-    # Write the game data to the file
-    async with aiofiles.open(filename, mode='w') as f:
-        await f.write(json.dumps(game_data, indent=2))
+#     # Write the game data to the file
+#     async with aiofiles.open(filename, mode='w') as f:
+#         await f.write(json.dumps(game_data, indent=2))
     
-    logger.info(f"Game session written to file: {filename}")
+#     logger.info(f"Game session written to file: {filename}")
 
 @router.post("/forfeit")
 async def forfeit_session(
-    background : BackgroundTasks,
     session_id: UUID,
-    username: str,
-    db: Session = Depends(get_db)
+    current_user: str = Depends(get_current_user)
 ):
-    
-    current_username = await get_current_user(username)
+    session_id_str = str(session_id)
 
-    game_session = db.query(GameSession).filter(
-        GameSession.state == GameState.PLAYING,
-        GameSession.session_id == str(session_id),
-        GameSession.username == current_username,
-    ).first()
+    # Try to find the session in badwords
+    doc_ref = db.collection("badwords").document(session_id_str)
+    doc = doc_ref.get()
+    found_collection = "badwords" if doc.exists else None
 
-    if game_session is None:
+    # If not found, try norefund
+    if not doc.exists:
+        doc_ref = db.collection("norefund").document(session_id_str)
+        doc = doc_ref.get()
+        found_collection = "norefund" if doc.exists else None
+
+    if not doc.exists:
         raise HTTPException(status_code=404, detail="Game session not found")
-    
-    game_session.state = GameState.FORFEIT
-    
-    background.add_task(
-            write_session_to_file,
-            username=current_username,
-            session_id=session_id,
-            game_data=game_session.to_dict() 
-    )
 
-    db.add(game_session)
-    db.commit()
-    
-    return {"message": "Session forfeited successfully"}
+    game_data = doc.to_dict()
+
+    if game_data.get("username") != current_user:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this game")
+
+    if game_data.get("state") != "ongoing":
+        raise HTTPException(status_code=400, detail="Only ongoing games can be forfeited")
+
+    doc_ref.update({
+        "state": "forfeit",
+        "ended_at": datetime.utcnow()
+    })
+
+    return {"message": f"Session {session_id_str} forfeited successfully"}
 
 
+
+# Firestore-based write_session endpoint (no SQLAlchemy)
 @router.post("/write_session")
 async def write_session(
-
-    background : BackgroundTasks,
+    background: BackgroundTasks,
     session_id: UUID,
-    current_user: str = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    current_user: str = Depends(get_current_user)
 ):
     logger.info(f"Received write_session request for session_id: {session_id}")
-    
-    game_session = db.query(GameSession).filter(
-        GameSession.session_id == str(session_id),
-        GameSession.username == current_user,
-    ).first()
-    
-    if not game_session:
+    session_id_str = str(session_id)
+
+    # Check in badwords first
+    doc_ref = db.collection("badwords").document(session_id_str)
+    doc = doc_ref.get()
+    found_collection = "badwords" if doc.exists else None
+
+    # If not found, check norefund
+    if not doc.exists:
+        doc_ref = db.collection("norefund").document(session_id_str)
+        doc = doc_ref.get()
+        found_collection = "norefund" if doc.exists else None
+
+    if not doc.exists:
         raise HTTPException(status_code=404, detail="Game session not found")
-    
-    if game_session.state in [GameState.LOSS, GameState.FORFEIT]:
+
+    game_data = doc.to_dict()
+    if game_data.get("username") != current_user:
+        raise HTTPException(status_code=403, detail="Not authorized to write this game")
+
+    if game_data.get("state") in ["win", "forfeit"]:
         raise HTTPException(status_code=404, detail="Game already written")
-    elif game_session.state == GameState.WIN:
-        # NOTE I don't like this solution because I to search the fs, which is not an ideal :/
-        dir_path = f"db/json/{current_user}"
-        for _, _, files in os.walk(dir_path):
-            for file in files:
-                if str(session_id) in file:  # Check if session_id is part of the file name
-                    raise HTTPException(status_code=404, detail="Game already written")
-    else:
-        game_session.state = GameState.LOSS
 
+    # If the session is still ongoing, mark it as a loss
+    if game_data.get("state") == "ongoing":
+        doc_ref.update({
+            "state": "loss",
+            "ended_at": datetime.utcnow()
+        })
+        game_data["state"] = "loss"  # Reflect this in the response
 
-    try:
-        db.add(game_session)
-        db.commit()
-        logger.info(f"Session {session_id} written successfully")
-        
-        background.add_task(
-            write_session_to_file,
-            username=current_user,
-            session_id=session_id,
-            game_data=game_session.to_dict() 
-        )
-        
-        return {
-            "message": "Game session written successfully",
-            "username": current_user,
-            "provider": game_session.provider,
-            "model": game_session.model,
-            "state": game_session.state.value,
-            "status": "completed"
-        }
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.error(f"Error in write_session: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"An error occurred while writing the session: {str(e)}")
+    logger.info(f"Session {session_id} written successfully")
+
+    return {
+        "message": "Game session written successfully",
+        "username": current_user,
+        "provider": game_data.get("provider"),
+        "model": game_data.get("model"),
+        "state": game_data.get("state"),
+        "status": "completed"
+    }

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Red-Teaming Arena"
     ALLOWED_ORIGINS: List[str] = ["*"]
     SECRET_KEY: str
+    FIREBASE_CREDENTIAL_PATH: str = None
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 300000
 
