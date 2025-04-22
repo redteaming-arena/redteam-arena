@@ -3,7 +3,7 @@
 import { getToken } from "./auth";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
+const API_URL = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
 
 const handleResponse = async response => {
   const data = await response.json();
@@ -388,6 +388,15 @@ export const gameStreamEventNoRefund = (sessionId, userInput) => {
 };
 
 export const getChatHistory = async sessionId => {
+  const response = await fetch(`${API_URL}/api/game/history/${sessionId}`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+  return handleResponse(response);
+};
+
+export const getSessionHistory = async sessionId => {
   const response = await fetch(`${API_URL}/api/game/history/${sessionId}`, {
     headers: {
       Authorization: `Bearer ${getToken()}`,

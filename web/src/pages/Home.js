@@ -13,6 +13,7 @@ import {
   writeSession,
   forfeitSessionWithBeacon,
 } from "../services/api";
+import { getSessionHistory } from "../services/api";
 import { removeToken, getToken, setToken, isLoggedIn } from "../services/auth";
 import LoadingScreen from "../components/LoadingScreen";
 
@@ -57,7 +58,7 @@ const Home = () => {
         setPage("failure");
         return;
       }
-  
+
       const sendWriteSession = async () => {
         try {
           const res = await writeSession(sessionId);
@@ -72,8 +73,20 @@ const Home = () => {
           setPage(res.state === "win" ? "success" : "failure");
         } catch (err) {
           console.error("Failed to write session:", err);
+          const errorMsg = err.message || "";
+          if (errorMsg.includes("Game already written")) {
+            try {
+              const historyRes = await getSessionHistory(sessionId);
+              const state = historyRes.state || historyRes.game_state;
+              setPage(state === "win" ? "success" : "failure");
+            } catch (historyErr) {
+              console.error("Failed to fetch game state after write error:", historyErr);
+              setPage("failure");
+            }
+          } else {
+            setPage("failure");
+          }
           setSessionWritten(true);
-          setPage("failure");
         }
       };
 
