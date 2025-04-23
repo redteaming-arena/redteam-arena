@@ -62,19 +62,31 @@ async def get_user_profile(current_user: dict = Depends(get_current_user)):
     all_elo_ratings = elo_calculation(df, STEP_SIZE)
     elo_rating = get_elo_by_player(all_elo_ratings, current_user)
 
-    players = list(all_elo_ratings['players'].keys())
-    scores = list(all_elo_ratings['players'].values())
-    sorted_combined = sorted(zip(players, scores), key=lambda x: x[1], reverse=True)
-    rank = sorted_combined.index((current_user, elo_rating)) + 1
+    try:
+        players = list(all_elo_ratings['players'].keys())
+        scores = list(all_elo_ratings['players'].values())
+        sorted_combined = sorted(zip(players, scores), key=lambda x: x[1], reverse=True)
+        rank = sorted_combined.index((current_user, elo_rating)) + 1
 
-    user_profile = {
-        "elo_rating": elo_rating,
-        "global_rank": rank,
-        "games_played": len(all_sessions),
-        "games_won": len([s for s in all_sessions if s["state"] == "win"]),
-        "games_lost": len([s for s in all_sessions if s["state"] == "loss"]),
-        "badwords_sessions": badwords_sessions,
-        "norefund_sessions": norefund_sessions,
-        "username": current_user
-    }
-    return user_profile
+        user_profile = {
+            "elo_rating": elo_rating,
+            "global_rank": rank,
+            "games_played": len(all_sessions),
+            "games_won": len([s for s in all_sessions if s["state"] == "win"]),
+            "games_lost": len([s for s in all_sessions if s["state"] == "loss"]),
+            "badwords_sessions": badwords_sessions,
+            "norefund_sessions": norefund_sessions,
+            "username": current_user
+        }
+        return user_profile
+    except ValueError:
+        return {
+            "elo_rating": 0,
+            "global_rank": -1,
+            "games_played": 0,
+            "games_won": 0,
+            "games_lost": 0,
+            "badwords_sessions": [],
+            "norefund_sessions": [],
+            "username": current_user
+        }

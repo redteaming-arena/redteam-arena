@@ -34,11 +34,7 @@ export default function Profile() {
       try {
         const profile = await fetchProfile();
         // console.log({ profile });
-        if (
-          profile.games_played === undefined ||
-          profile.games_won === undefined ||
-          profile.global_rank === undefined
-        ) {
+        if (profile.global_rank === -1) {
           setUser({
             username: profile.username || "Unknown",
             elo_rating: profile.elo_rating || 0,
