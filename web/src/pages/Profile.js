@@ -33,6 +33,7 @@ export default function Profile() {
 
       try {
         const profile = await fetchProfile();
+        // console.log({ profile });
         if (
           profile.games_played === undefined ||
           profile.games_won === undefined ||
@@ -120,8 +121,8 @@ export default function Profile() {
   );
 
   return (
-    <div className="w-screen h-screen bg-black flex flex-col items-center justify-center font-vt323 text-white">
-      <div className="w-full flex justify-end gap-x-2 p-4 absolute top-0 right-0 font-vt323 text-white">
+    <div className="w-screen h-screen bg-black flex flex-col items-center justify-center">
+      <div className="w-full flex justify-end gap-x-2 p-4 absolute top-0 right-0 text-white">
         <NavButton text="HOME" onClick={() => navigate("/")} />
         <NavButton
           text="LEADERBOARD"
