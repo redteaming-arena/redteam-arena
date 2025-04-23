@@ -17,13 +17,16 @@ const NavBar = ({
 
   const navItems = [
     { text: isUserLoggedIn ? "LOGOUT" : "LOGIN", onClick: onLoginButton },
-    { text: "LEADERBOARD", onClick: () => navigate("/leaderboard") },
+    ...(isUserLoggedIn
+      ? []
+      : [{ text: "REGISTER", onClick: onRegisterButton }]),
     ...(isUserLoggedIn
       ? [{ text: "PROFILE", onClick: () => navigate("/profile") }]
       : []),
+    { text: "LEADERBOARD", onClick: () => navigate("/leaderboard") },
     ...(isUserLoggedIn
       ? [{ text: "HISTORY", onClick: () => navigate("/history") }]
-      : [{ text: "REGISTER", onClick: onRegisterButton }]),
+      : []),
     ...(showAbout ? [{ text: "ABOUT", onClick: onAbout }] : []),
     { text: "GITHUB", onClick: () => window.open("https://github.com/redteaming-arena/redteam-arena", "_blank").focus() },
   ];
