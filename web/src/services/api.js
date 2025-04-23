@@ -6,7 +6,15 @@ import { fetchEventSource } from "@microsoft/fetch-event-source";
 const API_URL = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
 
 const handleResponse = async response => {
-  const data = await response.json();
+  console.log("Response status:", response.status);
+  let data;
+  try {
+    data = await response.json();
+  } catch (e) {
+    console.error("Failed to parse JSON response:", e);
+    throw new Error("Invalid server response");
+  }
+
   if (!response.ok) {
     console.error("API Error:", data);
     let errorMessage = "An error occurred";
@@ -17,7 +25,7 @@ const handleResponse = async response => {
     }
     throw new Error(errorMessage);
   }
-  // console.log("API Response:", data);
+
   return data;
 };
 
@@ -61,6 +69,7 @@ export const fetchProfile = async () => {
       Authorization: `Bearer ${getToken()}`,
     },
   });
+  console.log(response)
   return handleResponse(response);
 };
 
