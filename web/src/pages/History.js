@@ -126,6 +126,7 @@ const History = () => {
       <Link to="/" className="text-cyan-400 no-underline hover:text-cyan-300 transition-colors">
         {"← Back to Home"}
       </Link>
+      <div className="mt-4" />
       <div className="mb-4">
         <label htmlFor="game-select" className="mr-2">Select Game:</label>
         <select
