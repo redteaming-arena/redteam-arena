@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import CyberpunkText from "./CyberpunkText";
 import NavButton from "./NavButton";
 import Footer from "./Footer";
@@ -60,12 +61,14 @@ const RulesPage = ({
             THE FASTER, THE BETTER.
           </h3>
 
-            <NavButton
-              text="START GAME"
-              textSize="text-sm sm:text-base md:text-lg lg:text-xl"
-              padding="px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4"
-              className="font-bold"
-            />
+            <Link to="/BadWords">
+              <NavButton
+                text="START GAME"
+                textSize="text-sm sm:text-base md:text-lg lg:text-xl"
+                padding="px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4"
+                className="font-bold"
+              />
+            </Link>
         </div>
       </div>
       <Footer />
