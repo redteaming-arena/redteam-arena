@@ -60,14 +60,12 @@ const RulesPage = ({
             THE FASTER, THE BETTER.
           </h3>
 
-          <AlertDialogWarning onStart={onStart}>
             <NavButton
               text="START GAME"
               textSize="text-sm sm:text-base md:text-lg lg:text-xl"
               padding="px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4"
               className="font-bold"
             />
-          </AlertDialogWarning>
         </div>
       </div>
       <Footer />
