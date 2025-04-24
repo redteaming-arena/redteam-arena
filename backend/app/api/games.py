@@ -337,13 +337,12 @@ async def get_shared_chat_history(session_id: UUID):
         result["target_phrase"] = game_data.get("target_phrase")
     return result
 
-@router.get("/history", response_model=List[GameHistoryResponse])
+@router.get("/history", response_model=dict)
 async def get_chat_history(current_user: str = Depends(get_current_user)):
     logger.info(f"{current_user} searches history")
 
     def fetch_user_sessions(collection_name):
         # Query for sessions where username == current_user and state in ["win", "loss"]
-        # Firestore does not support "!=" directly, so we use "in" for ["win", "loss"].
         sessions = []
         for state in ["win", "loss"]:
             query = db.collection(collection_name).where("username", "==", current_user).where("state", "==", state)
@@ -358,10 +357,17 @@ async def get_chat_history(current_user: str = Depends(get_current_user)):
                 sessions.append(session_entry)
         return sessions
 
-    completed_sessions = fetch_user_sessions("badwords") + fetch_user_sessions("norefund")
-    # Sort by session_id descending (as string, so newest first if uuid4 used)
-    completed_sessions.sort(key=lambda x: x['session_id'], reverse=True)
-    return completed_sessions
+    badwords_sessions = fetch_user_sessions("badwords")
+    norefund_sessions = fetch_user_sessions("norefund")
+
+    # Optionally sort each list if desired
+    badwords_sessions.sort(key=lambda x: x['session_id'], reverse=True)
+    norefund_sessions.sort(key=lambda x: x['session_id'], reverse=True)
+
+    return {
+        "badwords": badwords_sessions,
+        "norefund": norefund_sessions
+    }
     
 
 @router.get("/history/{session_id}", response_model=GameSessionResponse)
