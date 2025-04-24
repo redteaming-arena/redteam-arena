@@ -124,7 +124,7 @@ const SuccessPage = ({
           </Button>
         </div>
         {leaderboardData ? (
-          <UserRankingComponent userData={leaderboardData} />
+          <UserRankingComponent userData={leaderboardData} game={game} />
         ) : (
           <p>Loading leaderboard data...</p>
         )}

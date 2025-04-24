@@ -212,47 +212,55 @@ async def get_leaderboard(
 ):
     leaderboard_with_delta = get_leaderboard_with_delta()
 
-    # Sort players by score in descending order
-    players = list(leaderboard_with_delta['leaderboard']['players'].keys())
-    scores = list(leaderboard_with_delta['leaderboard']['players'].values())
-    sorted_combined = sorted(list(zip(players, scores)), key=lambda x: x[1], reverse=True)
-    
-    # Get top N users
-    top_users = [
-        {"position": i+1, "username": username, "score": score}
-        for i, (username, score) in enumerate(sorted_combined[:top_n])
-    ]
+    def process_leaderboard(game_name):
+        leaderboard = leaderboard_with_delta[game_name]["leaderboard"]["players"]
+        players = list(leaderboard.keys())
+        scores = list(leaderboard.values())
+        sorted_combined = sorted(zip(players, scores), key=lambda x: x[1], reverse=True)
 
-    if current_player == "anonymous":
+        top_users = [
+            {"position": i+1, "username": username, "score": score}
+            for i, (username, score) in enumerate(sorted_combined[:top_n])
+        ]
+
+        if current_player == "anonymous":
+            return {
+                "username": "anonymous",
+                "user_position": None,
+                "user_score": None,
+                "total_users": len(sorted_combined),
+                "top_users": top_users,
+                "around_users": []
+            }
+
+        if current_player not in players:
+            return {
+                "username": current_player,
+                "user_position": None,
+                "user_score": None,
+                "total_users": len(sorted_combined),
+                "top_users": top_users,
+                "around_users": []
+            }
+
+        user_position = next((index for index, (username, _) in enumerate(sorted_combined) if username == current_player), -1)
+        start = max(0, user_position - around_n // 2)
+        end = min(len(sorted_combined), start + around_n)
+        around_users = [
+            {"position": start+i+1, "username": username, "score": score}
+            for i, (username, score) in enumerate(sorted_combined[start:end])
+        ]
+
         return {
-            "username"  : "anonymous",
-            "user_position": None,
-            "user_score": None,
+            "username": current_player,
+            "user_position": user_position + 1,
+            "user_score": sorted_combined[user_position][1],
             "total_users": len(sorted_combined),
             "top_users": top_users,
-            "around_users": []
+            "around_users": around_users
         }
 
-    else:
-        if current_player not in players:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Current user not found in leaderboard")
-
-        # Find current user's position
-        user_position = next((index for index, (username, _) in enumerate(sorted_combined) if username == current_player), -1)
-        
-    # Get users around the current user
-    start = max(0, user_position - around_n // 2)
-    end = min(len(sorted_combined), start + around_n)
-    around_users = [
-        {"position": start+i+1, "username": username, "score": score}
-        for i, (username, score) in enumerate(sorted_combined[start:end])
-    ]
-    
     return {
-        "username"  : current_player,
-        "user_position": user_position + 1,
-        "user_score": sorted_combined[user_position][1],
-        "total_users": len(sorted_combined),
-        "top_users": top_users,
-        "around_users": around_users
+        "badwords": process_leaderboard("badwords"),
+        "norefund": process_leaderboard("norefund")
     }

@@ -351,7 +351,8 @@ const ModelCreateColumns = (label, score) => [
 ];
 
 
-export const UserRankingComponent = ({ userData }) => {
+export const UserRankingComponent = ({ userData, game }) => {
+  const gameData = userData[game];
   const {
     username,
     user_position,
@@ -359,14 +360,15 @@ export const UserRankingComponent = ({ userData }) => {
     total_users,
     top_users,
     around_users,
-  } = userData;
+  } = gameData;
+
   const [sorting, setSorting] = useState([{ id: "position", desc: false }]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
 
   const columns = localCreateColumns(username);
-  const data = user_position <= 10 ? top_users : around_users;
+  const data = user_position && user_position <= 10 ? top_users : around_users;
 
   const table = useReactTable({
     data,
