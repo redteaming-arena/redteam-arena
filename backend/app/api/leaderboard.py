@@ -11,6 +11,7 @@ from app.core.security import get_current_user
 import pickle
 import pdb
 from app.core.firestore import db
+from app.core.redis_client import redis_client
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -202,7 +203,15 @@ def get_leaderboard_with_delta():
 
 @router.get("/get_leaderboard")
 async def get_leaderboard():
-    return get_leaderboard_with_delta()
+    cache_key = "cached_leaderboard"
+    cached_data = await redis_client.get(cache_key)
+
+    if cached_data:
+        return json.loads(cached_data)
+
+    result = get_leaderboard_with_delta()
+    await redis_client.setex(cache_key, 1800, json.dumps(result))  # cache for 30 minutes
+    return result
 
 @router.get("/get_leaderboard/me")
 async def get_leaderboard(
