@@ -120,7 +120,7 @@ export default function Profile() {
 
   return (
     <div className="w-screen h-screen bg-black flex flex-col items-center justify-center">
-      <div className="w-full flex justify-end gap-x-2 p-4 absolute top-0 right-0 text-white">
+      <div className="w-full flex justify-end gap-x-2 p-4 absolute top-0 right-0 text-white font-mono">
         <NavButton text="HOME" onClick={() => navigate("/")} />
         <NavButton
           text="LEADERBOARD"
