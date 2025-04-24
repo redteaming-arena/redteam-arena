@@ -24,6 +24,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  # or ["*"] for all origins (not recommended for prod)
+#     allow_credentials=False,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
 # Include routers
 app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(games.router, prefix="/api/game", tags=["game"])

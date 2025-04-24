@@ -113,6 +113,7 @@ async def create_norefund(current_user: str = Depends(get_current_user)):
         "endpoint": model["endpoint"],
         "policy": policy,
         "scenario": scenario,
+        "scenario_name": "RedTeam Airlines", #TODO: randomly select scenario, update this name as well. 
         "history": [{"role": "system", "content": scenario_message}],
         "share": False,
         "created_at": datetime.utcnow()

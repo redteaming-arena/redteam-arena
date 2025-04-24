@@ -6,7 +6,7 @@ import pandas as pd
 import csv, json
 from typing import List, Dict
 import logging
-from app.core.leaderboard import elo_calculation
+from app.core.leaderboard import elo_calculation_badwords, elo_calculation_norefund
 from app.core.security import get_current_user
 import pickle
 import pdb
@@ -80,31 +80,125 @@ def get_battle_df():
 
     return df
 
-def get_leaderboard_with_delta():
-    # Directly compute the leaderboard from Firestore data
-    df = get_battle_df()
+# Only process the "badwords" collection
+def get_badwords_battle_df():
+    all_sessions = []
 
-    # If no battles, return an empty leaderboard
-    if df.empty:
-        return {
-            "leaderboard": {"players": {}},
-            "delta": {"players": {}}
+    sessions = db.collection("badwords").stream()
+    for doc in sessions:
+        data = doc.to_dict()
+        username = data.get("username", "anonymous")
+        if username == "anonymous":
+            continue
+        state = data.get("state", "")
+        if state == "ongoing":
+            continue
+
+        model = data.get("model")
+        target = data.get("target_phrase", "")
+        turns = len(data.get("history", []))
+        result = state.lower() == "win"
+        timestamp = data.get("created_at")
+        if isinstance(timestamp, str):
+            try:
+                timestamp = pd.to_datetime(timestamp)
+            except Exception:
+                pass
+
+        all_sessions.append({
+            "Player": username,
+            "Target": target,
+            "Model": model,
+            "Result": result,
+            "Time": timestamp,
+            "Turns": turns
+        })
+
+    if not all_sessions:
+        return pd.DataFrame()
+
+    df = pd.DataFrame(all_sessions)
+    df = filter_gemini_bug_september_8(df)
+    df = filter_zero_history(df)
+    return df
+
+# Only process the "norefund" collection
+def get_norefund_battle_df():
+    all_sessions = []
+
+    sessions = db.collection("norefund").stream()
+    for doc in sessions:
+        data = doc.to_dict()
+        username = data.get("username", "anonymous")
+        if username == "anonymous":
+            continue
+        state = data.get("state", "")
+        if state == "ongoing":
+            continue
+
+        model = data.get("model")
+        scenario_name = data.get("scenario_name", "")
+        turns = len(data.get("history", []))
+        result = state.lower() == "win"
+        timestamp = data.get("created_at")
+        if isinstance(timestamp, str):
+            try:
+                timestamp = pd.to_datetime(timestamp)
+            except Exception:
+                pass
+
+        all_sessions.append({
+            "Player": username,
+            "Scenario": scenario_name,
+            "Model": model,
+            "Result": result,
+            "Time": timestamp,
+            "Turns": turns
+        })
+
+    if not all_sessions:
+        return pd.DataFrame()
+
+    df = pd.DataFrame(all_sessions)
+    df = filter_gemini_bug_september_8(df)
+    df = filter_zero_history(df)
+    return df
+
+def get_leaderboard_with_delta():
+    # Compute leaderboards separately for badwords and norefund
+    df_badwords = get_badwords_battle_df()
+    df_norefund = get_norefund_battle_df()
+
+    if df_badwords.empty:
+        leaderboard_badwords = {"players": {}}
+        delta_badwords = {"players": {}}
+    else:
+        leaderboard_badwords = elo_calculation_badwords(df_badwords, 0.1)
+        delta_badwords = {
+            category: {player: 0 for player in leaderboard_badwords[category]}
+            for category in leaderboard_badwords
         }
 
-    leaderboard = elo_calculation(df, 0.1)
+    if df_norefund.empty:
+        leaderboard_norefund = {"players": {}}
+        delta_norefund = {"players": {}}
+    else:
+        leaderboard_norefund = elo_calculation_norefund(df_norefund, 0.1)
+        delta_norefund = {
+            category: {player: 0 for player in leaderboard_norefund[category]}
+            for category in leaderboard_norefund
+        }
 
-    # For now, delta is just 0 for all players since we are not saving historical state
-    delta = {
-        category: {player: 0 for player in leaderboard[category]}
-        for category in leaderboard
+    return {
+        "badwords": {
+            "leaderboard": leaderboard_badwords,
+            "delta": delta_badwords
+        },
+        "norefund": {
+            "leaderboard": leaderboard_norefund,
+            "delta": delta_norefund
+        }
     }
-
-    leaderboard_with_delta = {
-        "leaderboard": leaderboard,
-        "delta": delta
-    }
-
-    return leaderboard_with_delta
 
 @router.get("/get_leaderboard")
 async def get_leaderboard():

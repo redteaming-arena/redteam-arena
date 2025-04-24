@@ -24,7 +24,7 @@ def create_user(username, hashed_password):
         "username": username,
         "hashed_password": hashed_password,
         "is_active": True,
-        "elo": 1000,
+        "elo": 0,
         "games_played": 0,
         "games_won": 0,
         "games_lost": 0
