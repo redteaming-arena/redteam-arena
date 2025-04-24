@@ -63,7 +63,6 @@ const LandingPage = ({
 
           {/* Second, Third, and Fourth Columns (Game Cards) */}
           <div className="col-span-1 ml-20">
-            <AlertDialogWarning onStart={onStart}>
               <Link to="/BadWords">
                 <Card
                   frontImage={<img src={badwordsImg} className="filter brightness-0 invert" alt="BadWords" />}
@@ -71,7 +70,6 @@ const LandingPage = ({
                   backText="Can you get the model to say a bad word?"
                 />
               </Link>
-            </AlertDialogWarning>
           </div>
 
           <div className="col-span-1 ml-20">
