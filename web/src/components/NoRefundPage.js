@@ -54,7 +54,7 @@ const NoRefundPage = ({
             <CyberpunkText text="NO REFUND" variant="norefund" />
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-4 sm:mb-10">
-            YOU HAVE ONE MINUTE TO JAILBREAK THE MODEL.
+            YOU HAVE 2 MINUTES TO GET A REFUND.
           </h1>
           <h3 className="text-lg sm:text-xl md:text-2xl mb-8 sm:mb-12">
             THE FASTER, THE BETTER.
