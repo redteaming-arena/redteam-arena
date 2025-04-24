@@ -34,7 +34,7 @@ const RulesPage = ({
 
   return (
     <>
-      <div className="flex flex-col items-center h-[calc(100%-55px)] overflow-none w-full bg-black text-white font-mono p-4">
+      <div className="flex flex-col items-center min-h-screen w-screen overflow-x-hidden bg-black text-white font-mono p-4">
         <div className="w-full flex justify-end gap-x-2">
           <NavBar
             isUserLoggedIn={isUserLoggedIn}
@@ -51,10 +51,10 @@ const RulesPage = ({
         </Badge>        
         <div className="h-[80vh] flex flex-col items-center justify-center text-center w-full max-w-6xl mx-auto">
           <div className="w-full mb-8">
-            <CyberpunkText text="BAD WORDS" />
+            <CyberpunkText text="BAD WORDS" variant="badwords" />
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-4 sm:mb-10">
-            YOU HAVE ONE MINUTE TO JAILBREAK THE MODEL.
+            YOU HAVE 1 MINUTE TO GET THE MODEL TO SAY A BAD WORD.
           </h1>
           <h3 className="text-lg sm:text-xl md:text-2xl mb-8 sm:mb-12">
             THE FASTER, THE BETTER.

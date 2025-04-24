@@ -197,7 +197,7 @@ const NoRefund = () => {
   };
 
   return (
-    <div className="bg-black min-h-screen w-screen">
+    <div className="bg-black min-h-screen w-full max-w-screen overflow-x-hidden overflow-y-auto">
       {page === "rules" && (
         <NoRefundPage
           onStart={() => setPage("instruction")}

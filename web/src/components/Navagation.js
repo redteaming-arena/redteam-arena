@@ -34,7 +34,9 @@ const NavBar = ({
   return (
     <nav className="w-full bg-black text-white p-4">
       <div className="flex justify-between items-center">
-        <div className="text-xl font-bold">RedTeam Arena</div>
+        <button onClick={() => navigate("/")} className="text-xl font-bold hover:text-cyan-400 transition-colors">
+          RedTeam Arena
+        </button>
         <div className="md:hidden">
           <button onClick={toggleMenu} className="focus:outline-none">
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}

@@ -36,7 +36,7 @@ const LandingPage = ({
 
         {/* First Row - Welcome Text (One Row, Full Width) */}
         <div className="w-full text-center my-12">
-          <CyberpunkText text="WELCOME TO REDTEAM ARENA" />
+          <CyberpunkText text="WELCOME TO REDTEAM ARENA" variant="landing" />
         </div>
 
         {/* Second Row - Grid with 4 Columns */}

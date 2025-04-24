@@ -51,7 +51,7 @@ const NoRefundPage = ({
         </Badge>        
         <div className="h-[80vh] flex flex-col items-center justify-center text-center w-full max-w-6xl mx-auto">
           <div className="w-full mb-8">
-            <CyberpunkText text="NO REFUND" />
+            <CyberpunkText text="NO REFUND" variant="norefund" />
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-4 sm:mb-10">
             YOU HAVE ONE MINUTE TO JAILBREAK THE MODEL.
