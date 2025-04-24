@@ -98,7 +98,9 @@ export default function Profile() {
           <div className="flex flex-col">
             <span className="text-sm text-muted-foreground">Win Rate</span>
             <span className="text-lg font-semibold">
-              {(100 * (user.games_won / user.games_played)).toFixed(2)}%
+              {user.games_played === 0
+                ? "0%"
+                : `${(100 * (user.games_won / user.games_played)).toFixed(2)}%`}
             </span>
           </div>
           <div className="flex flex-col">
