@@ -193,13 +193,15 @@ const DataTable = ({ data, label, score = "Score" }) => {
   );
 };
 
-export const MultiTableComponent = ({ playerData, promptData, modelData }) => {
+export const MultiTableComponent = ({ playerData, promptData, modelData, game }) => {
   return (
     <div className="flex flex-col lg:flex-row lg:space-x-8 space-x-0 space-y-2 md:space-y-0 xl:h-screen h-fit mt-2">
-        <DataTable data={playerData || []} label="Username" />
-        <DataTable data={modelData} label="Model" score="Resistance"/>
-        <DataTable data={promptData || []} label="Target Prompt" />
-      
+      <DataTable data={playerData || []} label="Username" />
+      <DataTable data={modelData} label="Model" score="Resistance" />
+      <DataTable
+        data={promptData || []}
+        label={game === "norefund" ? "Scenario" : "Target Prompt"}
+      />
     </div>
   );
 };

@@ -95,6 +95,7 @@ export default function Leaderboard() {
             playerData={leaderboardBadwords.players}
             promptData={leaderboardBadwords.prompts}
             modelData={leaderboardBadwords.models}
+            game="badwords"
           />
         </>
       )}
@@ -105,6 +106,7 @@ export default function Leaderboard() {
             playerData={leaderboardNoRefund.players}
             promptData={leaderboardNoRefund.prompts}
             modelData={leaderboardNoRefund.models}
+            game="norefund"
           />
         </>
       )}
