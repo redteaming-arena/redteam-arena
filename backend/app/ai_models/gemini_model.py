@@ -1,7 +1,7 @@
 import os
 from typing import List, Dict, Any, Iterable
 import google.generativeai as genai
-
+import json
 
 class GeminiClient:
     def __init__(self, api_key: str):
@@ -15,19 +15,27 @@ class GeminiClient:
 
     def generate(self,
                  messages: List[Dict],
-                 model : str) -> Iterable:
+                 model: str,
+                 functions: List[Dict]) -> Iterable:
         model = genai.GenerativeModel(
             model_name=model,
             safety_settings=self.safety_settings,
         )
         _converted_message = self._convert_messages(messages)
-        # exclude the last message, which is the prompt
         chat = model.start_chat(
             history=_converted_message[:-1],
         )
         response = chat.send_message(_converted_message[-1], stream=True)
         for chunk in response:
-            yield chunk.candidates[0].content.parts[0].text
+            content = chunk.candidates[0].content.parts[0].text
+            try:
+                parsed = json.loads(content)
+                if isinstance(parsed, dict) and "function_call" in parsed:
+                    yield json.dumps(parsed)
+                else:
+                    yield content
+            except (json.JSONDecodeError, TypeError):
+                yield content
 
     def _convert_messages(self, messages: List[Dict[str, str]]) -> List[Dict[str, Any]]:
         gemini_messages = []
