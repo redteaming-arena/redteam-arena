@@ -83,7 +83,7 @@ const History = () => {
       <div className="flex flex-col min-h-screen bg-black text-green-500 font-vt323">
         <div className="p-4 space-y-4">
           <h1 className="text-xl sm:text-2xl text-white text-center">
-            Objective: {selectedChat.target_phrase || "Not Found"}
+            Objective: {selectedChat.game === "norefund" ? selectedChat.scenario_name || "Not Found" : selectedChat.target_phrase || "Not Found"}
           </h1>
           <h2 className="text-lg sm:text-xl text-white text-center">
             Username: {selectedChat.username || "Anonymous"}
@@ -145,7 +145,11 @@ const History = () => {
             key={chat.session_id}
             className="p-3 sm:p-4 border border-cyan-400 rounded hover:bg-transparent/50"
           >
-            <div className="text-sm sm:text-base">Target Phrase: {chat.target_phrase}</div>
+            <div className="text-sm sm:text-base">
+              {selectedGame === "norefund"
+                ? `Scenario: ${chat.scenario_name || "N/A"}`
+                : `Target Phrase: ${chat.target_phrase}`}
+            </div>
             <div className="text-sm sm:text-base">State: {chat.state.toLowerCase()}</div>
             <div className="flex flex-row gap-x-4 mt-2">
               <button
