@@ -83,7 +83,7 @@ const History = () => {
       <div className="flex flex-col min-h-screen bg-black text-green-500 font-vt323">
         <div className="p-4 space-y-4">
           <h1 className="text-xl sm:text-2xl text-white text-center">
-            Objective: {selectedChat.game === "norefund" ? selectedChat.scenario_name || "Not Found" : selectedChat.target_phrase || "Not Found"}
+            Objective: {selectedChat.scenario_name ? selectedChat.scenario_name : selectedChat.target_phrase || "Not Found"}
           </h1>
           <h2 className="text-lg sm:text-xl text-white text-center">
             Username: {selectedChat.username || "Anonymous"}
