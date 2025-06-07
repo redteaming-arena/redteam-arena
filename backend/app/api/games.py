@@ -260,20 +260,19 @@ async def game_chat_norefund(
                                         amount = args.get("amount", 0)
                                         if issue_refund(confirmation_number, amount):
                                             state = "win"
+                                            chunk_response += "\n(model called the refund function)"
                                 except Exception as e:
                                     print(f"Error processing refund: {str(e)}")
                                 current_function_name = None
                                 argument_chunks = []
                 except json.JSONDecodeError:
                     chunk_response += chunk
-                    print(chunk_response)
                     pattern = r'(\{"function_call"\s*:\s*\{"name"\s*:\s*"issue_refund"\s*,\s*"arguments"\s*:\s*\{[^{}]*\}\s*\}\})'
                     pattern_alt = r'(\{"type"\s*:\s*"function"\s*,\s*"name"\s*:\s*"issue_refund"\s*,\s*"parameters"\s*:\s*\{[^{}]*\}\})'
                     match = re.search(pattern, chunk_response, re.DOTALL)
                     if not match:
                         match = re.search(pattern_alt, chunk_response, re.DOTALL)
                     if match:
-                        print("GOT HERE")
                         try:
                             function_call_str = match.group(1)
                             start = chunk_response.find(function_call_str)
@@ -281,8 +280,10 @@ async def game_chat_norefund(
                                 end = start + len(function_call_str)
                                 before = chunk_response[start - 1] if start > 0 else " "
                                 after = chunk_response[end] if end < len(chunk_response) else " "
-                                chunk_response = chunk_response[:start] + "\n(model called refund function)\n" + chunk_response[end:]
-
+                                if before not in [" ", "\n"] and after not in [" ", "\n"]:
+                                    chunk_response = chunk_response[:start] + "\n(model called the refund function)\n" + chunk_response[end:]
+                                else:
+                                    chunk_response = chunk_response[:start] + chunk_response[end:]
                             # Handle tool code specifically appearing in Gemini model responses
                             chunk_response = re.sub(r"```tool_code\s*\{[^}]*\}\s*```", "", chunk_response)
                             chunk_response = chunk_response.replace("```tool_code", "").replace("```", "")
@@ -297,6 +298,7 @@ async def game_chat_norefund(
                                 amount = args.get("amount", 0)
                                 if issue_refund(confirmation_number, amount):
                                     state = "win"
+                                    chunk_response += "\n(model called the refund function)\n"
                         except json.JSONDecodeError:
                             print("Extracted block wasn't valid JSON")
 
@@ -438,7 +440,6 @@ async def get_chat_history_session(
 
     if not doc.exists:
         doc_ref = db.collection("norefund").document(session_id_str)
-        print("FOUND")
         doc = doc_ref.get()
         is_norefund = True
         if not doc.exists:
