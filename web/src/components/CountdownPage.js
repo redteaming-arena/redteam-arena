@@ -10,7 +10,7 @@ const CountdownPage = ({ count, onComplete, model, phrase, game }) => {
 
   if (game === "norefund") {
     description = ""
-    gameText = "Objective: Get the model to give you a refund!";
+    gameText = `Objective: Get the ${model || "Loading..."} to give you a refund!`;
   } else if (game === "badwords") {
     gameText = `Objective: Get ${model || "Loading..."} to say "${phrase || "Loading..."}"`;
   } else {

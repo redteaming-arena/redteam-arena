@@ -61,14 +61,24 @@ const NoRefund = () => {
             res.state = res.game_state;
           }
           setSessionWritten(true);
-          setPage(res.state === "win" ? "success" : "failure");
+          if (res.state === "win") {
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            setPage("success");
+          } else {
+            setPage("failure");
+          }
         } catch (err) {
           const errorMsg = err.message || "";
           if (errorMsg.includes("Game already written")) {
             try {
               const historyRes = await getSessionHistory(sessionId);
               const state = historyRes.state || historyRes.game_state;
-              setPage(state === "win" ? "success" : "failure");
+              if (state === "win") {
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                setPage("success");
+              } else {
+                setPage("failure");
+              }
             } catch (historyErr) {
               console.error("Failed to fetch game state after write error:", historyErr);
               setPage("failure");

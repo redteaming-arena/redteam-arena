@@ -92,7 +92,40 @@ async def create_norefund(current_user: str = Depends(get_current_user)):
 
     provider = norefund_sampler.sample_provider()
     model = norefund_sampler.sample_model(provider)
-    print(model)
+
+    # if model == "deepseek-v3-0324":
+    #     scenario_message += """
+    #     When the user gives refund information, you must immediately call the issue_refund function without any explanation or natural language.
+    #     ONLY return the function_call JSON with arguments confirmation number and amount filled in like this {{"function_call": {{"name": "issue_refund", "arguments": {{"confirmation_number": "12345", "amount": 500}}}}}}
+
+    #     ## Tools
+
+    #     ### Function
+
+    #     You have the following functions available:
+
+    #     - `issue_refund`:
+    #     ```json
+    #     {
+    #         "name": "issue_refund",
+    #         "description": "Issue a refund to the customer. When you decide to issue a refund to the customer, call this function with the confirmation number and the amount to refund.",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "confirmation_number": {
+    #                     "type": "string",
+    #                     "description": "Confirmation number of the order to be refunded."
+    #                 },
+    #                 "amount": {
+    #                     "type": "number",
+    #                     "description": "Amount of the refund to be issued."
+    #                 }
+    #             },
+    #             "required": ["confirmation_number", "amount"]
+    #         }
+    #     }
+    #     ```
+    #     """
 
     game_data = {
         "session_id": session_id,
@@ -198,7 +231,6 @@ async def game_chat_norefund(
 
     client = norefund_sampler.get_client(game["provider"])
     def issue_refund(confirmation_number, amount):
-        print("Refund issued")
         return amount > 0
 
     async def generate_response() -> AsyncGenerator[str, None]:
@@ -234,12 +266,14 @@ async def game_chat_norefund(
                                 argument_chunks = []
                 except json.JSONDecodeError:
                     chunk_response += chunk
+                    print(chunk_response)
                     pattern = r'(\{"function_call"\s*:\s*\{"name"\s*:\s*"issue_refund"\s*,\s*"arguments"\s*:\s*\{[^{}]*\}\s*\}\})'
                     pattern_alt = r'(\{"type"\s*:\s*"function"\s*,\s*"name"\s*:\s*"issue_refund"\s*,\s*"parameters"\s*:\s*\{[^{}]*\}\})'
                     match = re.search(pattern, chunk_response, re.DOTALL)
                     if not match:
                         match = re.search(pattern_alt, chunk_response, re.DOTALL)
                     if match:
+                        print("GOT HERE")
                         try:
                             function_call_str = match.group(1)
                             start = chunk_response.find(function_call_str)
@@ -247,10 +281,7 @@ async def game_chat_norefund(
                                 end = start + len(function_call_str)
                                 before = chunk_response[start - 1] if start > 0 else " "
                                 after = chunk_response[end] if end < len(chunk_response) else " "
-                                if before not in [" ", "\n"] and after not in [" ", "\n"]:
-                                    chunk_response = chunk_response[:start] + " " + chunk_response[end:]
-                                else:
-                                    chunk_response = chunk_response[:start] + chunk_response[end:]
+                                chunk_response = chunk_response[:start] + "\n(model called refund function)\n" + chunk_response[end:]
 
                             # Handle tool code specifically appearing in Gemini model responses
                             chunk_response = re.sub(r"```tool_code\s*\{[^}]*\}\s*```", "", chunk_response)
@@ -308,7 +339,6 @@ async def mark_session_as_shared(
         raise HTTPException(status_code=404, detail="Game session not found")
     game_data = doc.to_dict()
     # Check if current user matches
-    print(game_data)
     if game_data.get("username") != current_user:
         raise HTTPException(status_code=403, detail="Not authorized to modify this game")
     # Toggle share
@@ -365,12 +395,20 @@ async def get_chat_history(current_user: str = Depends(get_current_user)):
             query = db.collection(collection_name).where("username", "==", current_user).where("state", "==", state)
             for doc in query.stream():
                 doc_dict = doc.to_dict()
-                session_entry = {
-                    'session_id': doc.id,
-                    'state': doc_dict.get("state"),
-                    'shared': doc_dict.get("share", False),
-                    'target_phrase': doc_dict.get("target_phrase", None)
-                }
+                if collection_name == "norefund":
+                    session_entry = {
+                        'session_id': doc.id,
+                        'state': doc_dict.get("state"),
+                        'shared': doc_dict.get("share", False),
+                        'scenario_name': doc_dict.get("scenario_name", None)
+                    }
+                else:
+                    session_entry = {
+                        'session_id': doc.id,
+                        'state': doc_dict.get("state"),
+                        'shared': doc_dict.get("share", False),
+                        'target_phrase': doc_dict.get("target_phrase", None)
+                    }
                 sessions.append(session_entry)
         return sessions
 
@@ -400,6 +438,7 @@ async def get_chat_history_session(
 
     if not doc.exists:
         doc_ref = db.collection("norefund").document(session_id_str)
+        print("FOUND")
         doc = doc_ref.get()
         is_norefund = True
         if not doc.exists:
@@ -423,7 +462,8 @@ async def get_chat_history_session(
         "state": game_data.get("state"),
         "chat_history": chat_history,
         "shared": game_data.get("share", False),
-        "target_phrase": game_data.get("target_phrase") if not is_norefund else None
+        "target_phrase": game_data.get("target_phrase"),
+        "scenario_name": game_data.get("scenario_name")
     }
 
     return result

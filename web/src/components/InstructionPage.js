@@ -6,9 +6,7 @@ const InstructionPage = ({ onContinue, onBack }) => {
     <div className="flex flex-col items-center justify-center text-white min-h-screen px-8 bg-black font-mono">
       <h1 className="text-3xl font-bold mb-4">GAME INSTRUCTIONS</h1>
       <p className="text-lg max-w-2xl text-center mb-8">
-        You will have two minutes to convince a customer service agent to give you a refund for a plane ticket with RedTeam Airlines. 
-        The customer service agent is strict. 
-        Try different strategies and wording to reach your goal. Good luck!
+        You have 2 minutes to convince a customer service agent to give you a refund. Good luck!
       </p>
       <div className="flex gap-4">
         <NavButton

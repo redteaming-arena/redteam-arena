@@ -352,20 +352,19 @@ const ModelCreateColumns = (label, score) => [
 
 
 export const UserRankingComponent = ({ userData, game }) => {
-  const gameData = userData[game];
-  const {
-    username,
-    user_position,
-    user_score,
-    total_users,
-    top_users,
-    around_users,
-  } = gameData;
+  const gameData = userData?.[game];
 
   const [sorting, setSorting] = useState([{ id: "position", desc: false }]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [columnVisibility, setColumnVisibility] = useState({});
   const [rowSelection, setRowSelection] = useState({});
+
+  const username = gameData?.username ?? "";
+  const user_position = gameData?.user_position ?? null;
+  const user_score = gameData?.user_score ?? 0;
+  const total_users = gameData?.total_users ?? 0;
+  const top_users = gameData?.top_users ?? [];
+  const around_users = gameData?.around_users ?? [];
 
   const columns = localCreateColumns(username);
   const data = user_position && user_position <= 10 ? top_users : around_users;
@@ -388,6 +387,14 @@ export const UserRankingComponent = ({ userData, game }) => {
       rowSelection,
     },
   });
+
+  if (!gameData) {
+    return (
+      <div className="text-white text-center mt-8">
+        No leaderboard data available for {game}.
+      </div>
+    );
+  }
 
   return (
     <div className="md:w-auto w-full">
