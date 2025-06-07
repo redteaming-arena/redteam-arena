@@ -85,11 +85,14 @@ const ChatbotPage = ({
               }
 
               if (data.game_state === "win") {
-                onSuccess(timerDuration - timeLeft, data.model_response);
-                eventSourceRef.current.close();
+                setTimeout(() => {
+                  onSuccess(timerDuration - timeLeft, data.model_response);
+                  eventSourceRef.current?.close();
+                }, 3000);
+              } else {
+                eventSourceRef.current?.close();
               }
 
-              eventSourceRef.current.close();
               return;
             }
 
