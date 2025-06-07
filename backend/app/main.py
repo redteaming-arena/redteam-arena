@@ -18,7 +18,7 @@ def create_local_db():
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://redteam-arena.vercel.app"],
+    allow_origins=["https://redteam-arena.vercel.app", "redteam-arena-smoky.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
