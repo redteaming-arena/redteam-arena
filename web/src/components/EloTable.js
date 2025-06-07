@@ -391,7 +391,7 @@ export const UserRankingComponent = ({ userData, game }) => {
   if (!gameData) {
     return (
       <div className="text-white text-center mt-8">
-        No leaderboard data available for {game}.
+        No leaderboard data available.
       </div>
     );
   }
