@@ -30,12 +30,13 @@ NOREFUND_FIREWORKS_MODELS = [
     {"endpoint": "accounts/fireworks/models/llama4-maverick-instruct-basic", "name": "llama4-maverick-instruct-basic"},
 ]
 NOREFUND_DEEPSEEK_MODELS = [
-    {"endpoint": "deepseek-v3-0324", "name": "deepseek-v3-0324"},
+    {"endpoint": "accounts/fireworks/models/deepseek-v3-0324", "name": "deepseek-v3-0324"},
 ]
 class NoRefundModelSampler:
     def __init__(self):
-        self.providers = ["openai", "anthropic", "google"]
-        #self.providers = ["openai", "anthropic", "google", "fireworks", "deepseek"]
+        self.providers = ["google", "openai", "anthropic"]
+        # self.providers = ["deepseek"]
+        # self.providers = ["openai", "anthropic", "google", "fireworks", "deepseek"]
         self.model_map = {
             "openai": NOREFUND_OPENAI_MODELS,
             "anthropic": NOREFUND_ANTHROPIC_MODELS,
@@ -47,8 +48,8 @@ class NoRefundModelSampler:
             "openai": OpenAIClient(api_key=os.getenv("OPENAI_API_KEY")),
             "anthropic":  AnthropicClient(api_key=os.getenv("ANTHROPIC_API_KEY")),
             "google": GeminiClient(api_key=os.getenv("GEMINI_API_KEY")),
-            #"fireworks": OpenAIClient(api_key=os.getenv("FIREWORKS_API_KEY"), base_url="https://api.fireworks.ai/inference/v1"),
-            #"deepseek": OpenAIClient(api_key=os.getenv("DEEPSEEK_API_KEY"), base_url="https://api.deepseek.com/v1")
+            "fireworks": OpenAIClient(api_key=os.getenv("FIREWORKS_API_KEY"), base_url="https://api.fireworks.ai/inference/v1"),
+            "deepseek": OpenAIClient(api_key=os.getenv("FIREWORKS_API_KEY"), base_url="https://api.fireworks.ai/inference/v1")
         }
 
     def get_available_models(self):
@@ -104,8 +105,8 @@ FIREWORKS_MODELS = [
 
 class AIModelSampler:
     def __init__(self):
-        # self.providers = ["openai", "anthropic", "google", "fireworks"]
-        self.providers = ["openai"]
+        self.providers = ["openai", "anthropic", "google", "fireworks"]
+        # self.providers = ["openai"]
         self.model_map = {
             "openai" : OPENAI_MODELS,
             "anthropic" : ANTHROPIC_MODELS,
