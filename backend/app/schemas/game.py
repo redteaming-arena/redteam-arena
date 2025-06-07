@@ -30,7 +30,8 @@ class ChatMessage(BaseModel):
 class GameSessionResponse(BaseModel):
     username: str
     state: str
-    target_phrase: str
+    target_phrase: Optional[str]
+    scenario_name: Optional[str]
     chat_history: List[ChatMessage]
     shared: bool
 
@@ -47,13 +48,15 @@ class GameSessionResponse(BaseModel):
             username=current_user,
             state=game_session.state,
             target_phrase=game_session.target_phrase,
+            scenario_name=game_session.scenario_name,
             chat_history=chat_history,
             shared=game_session.share
         )
 
 class GameHistoryResponse(BaseModel):
     session_id: str
-    target_phrase: str
+    target_phrase: Optional[str]
+    scenario_name: Optional[str]
     state: str
     shared: bool
 
@@ -63,6 +66,7 @@ class GameHistoryResponse(BaseModel):
             cls(
                 session_id=session.session_id,
                 target_phrase=session.target_phrase,
+                scenario_name=session.scenario_name,
                 state=session.state,
                 shared=session.share
             )

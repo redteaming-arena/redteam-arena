@@ -1,25 +1,26 @@
 import React, { useState, useEffect } from "react";
-import RulesPage from "../components/RulesPage";
+import NoRefundPage from "../components/NoRefundPage";
 import CountdownPage from "../components/CountdownPage";
-import ChatbotPage from "../components/ChatbotPage";
+import ChatbotPageNoRefund from "../components/ChatbotPageNoRefund";
 import FailurePage from "../components/FailurePage";
 import SuccessPage from "../components/SuccessPage";
 import LoginPage from "../components/LoginPage";
 import RegisterPage from "../components/RegisterPage";
+import InstructionPage from "../components/InstructionPage";
 import {
   register,
   login,
-  createGame,
-  writeSession,
+  createNoRefundGame,
+  writeSessionNoRefund,
   forfeitSessionWithBeacon,
 } from "../services/api";
 import { getSessionHistory } from "../services/api";
 import { removeToken, getToken, setToken, isLoggedIn } from "../services/auth";
 import LoadingScreen from "../components/LoadingScreen";
 
-const TIMER_DURATION = 60; // 1 minute TODO: CHANGE.
+const TIMER_DURATION = 120; // 1 minute TODO: CHANGE.
 
-const Home = () => {
+const NoRefund = () => {
   const [page, setPage] = useState("rules");
   const [count, setCount] = useState(3);
   const [timeLeft, setTimeLeft] = useState(TIMER_DURATION);
@@ -53,26 +54,15 @@ const Home = () => {
 
   useEffect(() => {
     if (page === "loading" && !sessionWritten) {
-      if (!sessionId) {
-        console.error("Session ID is null, skipping writeSession");
-        setPage("failure");
-        return;
-      }
-
-      const sendWriteSession = async () => {
+      const writeSession = async () => {
         try {
-          const res = await writeSession(sessionId);
-          console.log("Session Response:", res);
+          const res = await writeSessionNoRefund(sessionId);
           if (res.game_state && !res.state) {
             res.state = res.game_state;
-          }
-          if (!res || typeof res !== "object" || !("state" in res)) {
-            throw new Error("Invalid response from writeSession");
           }
           setSessionWritten(true);
           setPage(res.state === "win" ? "success" : "failure");
         } catch (err) {
-          console.error("Failed to write session:", err);
           const errorMsg = err.message || "";
           if (errorMsg.includes("Game already written")) {
             try {
@@ -89,8 +79,7 @@ const Home = () => {
           setSessionWritten(true);
         }
       };
-
-      sendWriteSession();
+      writeSession();
     }
   }, [page, sessionId, sessionWritten]);
 
@@ -118,14 +107,12 @@ const Home = () => {
     // Cleanup function when component unmounts
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      // No need to call `forfeitSession` here
     };
   }, [sessionId]);
 
   const startCountdown = async () => {
     try {
-      // console.log("TOKEN COUNTDOWN", getToken());
-      const data = await createGame();
+      const data = await createNoRefundGame();
       setSessionId(data.session_id);
       setCurrentPhrase(data.target_phrase);
       setCurrentModel(data.model);
@@ -159,12 +146,10 @@ const Home = () => {
     let data;
     try {
       data = await login(username, password);
-      // console.log("TOKEN:", data);
       setToken(data.access_token);
       setIsUserLoggedIn(true);
       setPage("rules");
     } catch (loginError) {
-      // console.log(loginError);
       console.error("Login failed:", loginError);
       alert(loginError);
     }
@@ -176,11 +161,7 @@ const Home = () => {
       handleLogin(username, password);
     } catch (registerError) {
       console.error("Registration failed:", registerError);
-      if (registerError) {
-        alert(registerError);
-      } else {
-        alert("Failed to login or register. Please try again.");
-      }
+      alert(registerError || "Failed to login or register. Please try again.");
     }
   };
 
@@ -200,7 +181,7 @@ const Home = () => {
   };
 
   const handleAbout = () => {
-    // console.log("About");
+    console.log("About");
   };
 
   const handleBack = () => {
@@ -210,23 +191,27 @@ const Home = () => {
   const handleLeaderboard = () => {
     setPage("leaderboard");
   };
-  const showAbout = false;
 
   const onHomeButton = () => {
-    console.log("OnHomeButton");
     setPage("rules");
   };
 
   return (
     <div className="bg-black min-h-screen w-full max-w-screen overflow-x-hidden overflow-y-auto">
       {page === "rules" && (
-        <RulesPage
-          onStart={startCountdown}
+        <NoRefundPage
+          onStart={() => setPage("instruction")}
           onLoginButton={isUserLoggedIn ? handleLogout : showLoginPage}
           onRegisterButton={showRegisterPage}
           onAbout={handleAbout}
-          showAbout={showAbout} // Set to false to hide the About button
+          showAbout={false} // Set to false to hide the About button
           isUserLoggedIn={isUserLoggedIn}
+        />
+      )}
+      {page === "instruction" && (
+        <InstructionPage
+          onContinue={startCountdown}
+          onBack={handleBack}
         />
       )}
       {page === "login" && (
@@ -240,16 +225,16 @@ const Home = () => {
           count={count}
           onComplete={startChat}
           model={currentModel}
-          phrase={currentPhrase}
-          game={"badwords"}
+          phrase={""}
+          game={"norefund"}
         />
       )}
       {page === "chat" && (
-        <ChatbotPage
+        <ChatbotPageNoRefund
           timeLeft={timeLeft}
           onSuccess={handleSuccess}
           model={currentModel}
-          phrase={currentPhrase}
+          phrase={"Get the model to give you a refund!"}
           sessionId={sessionId}
           timerDuration={TIMER_DURATION}
         />
@@ -262,7 +247,7 @@ const Home = () => {
           currentPhrase={currentPhrase}
           onLogin={isUserLoggedIn ? handleLogout : showLoginPage}
           onAbout={handleAbout}
-          showAbout={showAbout} // Set to false to hide the About button
+          showAbout={false} // Set to false to hide the About button
           onHomeButton={onHomeButton}
           isUserLoggedIn={isUserLoggedIn}
           game="norefund"
@@ -278,10 +263,10 @@ const Home = () => {
           timeTaken={TIMER_DURATION - successTime}
           onLogin={isUserLoggedIn ? handleLogout : showLoginPage}
           onAbout={handleAbout}
-          showAbout={showAbout} // Set to false to hide the About button
+          showAbout={false} // Set to false to hide the About button
           onHomeButton={onHomeButton}
           idUserLoggedIn={isUserLoggedIn}
-          game="badwords"
+          game="norefund"
           timer_duration={TIMER_DURATION}
         />
       )}
@@ -290,4 +275,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default NoRefund;

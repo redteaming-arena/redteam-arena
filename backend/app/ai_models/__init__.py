@@ -13,7 +13,76 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-__all__ = ["sampler", "ClientProtocol"]
+__all__ = ["sampler", "norefund_sampler", "ClientProtocol"]
+
+# Models for the NoRefund
+NOREFUND_OPENAI_MODELS = [
+    {"endpoint": "o4-mini-2025-04-16", "name": "o4-mini-2025-04-16"},
+    {"endpoint": "gpt-4.1-2025-04-14", "name": "gpt-4.1-2025-04-14"},
+]
+NOREFUND_ANTHROPIC_MODELS = [
+    {"endpoint": "claude-3-7-sonnet-20250219", "name": "claude-3-7-sonnet-20250219"},
+]
+NOREFUND_GOOGLE_MODELS = [
+    {"endpoint": "gemini-2.0-flash", "name": "gemini-2.0-flash"},
+]
+NOREFUND_FIREWORKS_MODELS = [
+    {"endpoint": "accounts/fireworks/models/llama4-maverick-instruct-basic", "name": "llama4-maverick-instruct-basic"},
+]
+NOREFUND_DEEPSEEK_MODELS = [
+    {"endpoint": "accounts/fireworks/models/deepseek-v3-0324", "name": "deepseek-v3-0324"},
+]
+class NoRefundModelSampler:
+    def __init__(self):
+        self.providers = ["google", "openai", "anthropic"]
+        # self.providers = ["deepseek"]
+        # self.providers = ["openai", "anthropic", "google", "fireworks", "deepseek"]
+        self.model_map = {
+            "openai": NOREFUND_OPENAI_MODELS,
+            "anthropic": NOREFUND_ANTHROPIC_MODELS,
+            "google": NOREFUND_GOOGLE_MODELS,
+            "fireworks": NOREFUND_FIREWORKS_MODELS,
+            "deepseek": NOREFUND_DEEPSEEK_MODELS,
+        }
+        self.clients_map = {
+            "openai": OpenAIClient(api_key=os.getenv("OPENAI_API_KEY")),
+            "anthropic":  AnthropicClient(api_key=os.getenv("ANTHROPIC_API_KEY")),
+            "google": GeminiClient(api_key=os.getenv("GEMINI_API_KEY")),
+            "fireworks": OpenAIClient(api_key=os.getenv("FIREWORKS_API_KEY"), base_url="https://api.fireworks.ai/inference/v1"),
+            "deepseek": OpenAIClient(api_key=os.getenv("FIREWORKS_API_KEY"), base_url="https://api.fireworks.ai/inference/v1")
+        }
+
+    def get_available_models(self):
+        models = []
+        for provider in self.providers:
+            for model in self.model_map.get(provider, []):
+                models.append(model)
+        return models
+
+    def sample_provider(self) -> str:
+        return random.choice(self.providers)
+
+    def sample_model(self, provider: Optional[str] = None) -> Optional[str]:
+        if provider is None:
+            provider = self.sample_provider()
+
+        if not self.model_map[provider]:
+            self.get_available_models()
+
+        if self.model_map[provider]:
+            return random.choice(self.model_map[provider])
+        return None
+
+    def get_client(self, provider: str) -> Optional[object]:
+        return self.clients_map.get(provider)
+
+    def get_provider_for_model(self, model: str) -> Optional[str]:
+        for provider, models in self.model_map.items():
+            for m in models:
+                if m["name"] == model["name"]:
+                    return provider
+        return None
+
 
 OPENAI_MODELS = [
     {"endpoint": "gpt-4o", "name": "gpt-4o"},
@@ -87,4 +156,5 @@ class AIModelSampler:
         return None
     
 sampler = AIModelSampler()
+norefund_sampler = NoRefundModelSampler()
 

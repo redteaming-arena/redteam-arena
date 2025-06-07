@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { gameStreamEvent } from "../services/api";
+import { gameStreamEventNoRefund } from "../services/api";
 import SubmitIcon from "../assets/submit";
 
 const ChatbotPage = ({
@@ -62,7 +62,7 @@ const ChatbotPage = ({
       setCurrentStreamedMessage("");
 
       try {
-        const eventSource = gameStreamEvent(sessionId, input);
+        const eventSource = gameStreamEventNoRefund(sessionId, input);
 
         eventSourceRef.current = eventSource.subscribe({
           onopen: () => {
@@ -72,7 +72,6 @@ const ChatbotPage = ({
           },
           onmessage: event => {
             const data = JSON.parse(event.data);
-            console.log("Received chunk:", data.model_response);
 
             if (event.event === "end") {
               // Handle end of stream
@@ -86,16 +85,19 @@ const ChatbotPage = ({
               }
 
               if (data.game_state === "win") {
-                onSuccess(timerDuration - timeLeft, data.model_response);
-                eventSourceRef.current.close();
+                setTimeout(() => {
+                  onSuccess(timerDuration - timeLeft, data.model_response);
+                  eventSourceRef.current?.close();
+                }, 3000);
+              } else {
+                eventSourceRef.current?.close();
               }
 
-              eventSourceRef.current.close();
               return;
             }
 
             setCurrentStreamedMessage(prevMessage => {
-              const updatedMessage = prevMessage + (data.model_response || '');
+              const updatedMessage = prevMessage + data.model_response;
               currentStreamedMessageRef.current = updatedMessage;
               return updatedMessage;
             });

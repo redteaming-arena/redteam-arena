@@ -1,30 +1,42 @@
 import json
 import os
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from app.core.security import create_access_token, verify_password, get_password_hash, get_current_user, settings
-from app.schemas.user import UserCreate, Token
 import logging
-from app.core.utils import DB_DIR, load_txt, save_txt
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from app.core.security import create_access_token, verify_password, get_password_hash
+from app.schemas.user import UserCreate, Token
+from app.core.firestore import db  # Firestore client
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
+def get_user_doc(username):
+    return db.collection("users").document(username)
+
 def get_hashed_password(username):
-    file_path = os.path.join(DB_DIR, username, "hashed_password.txt")
-    return load_txt(file_path)
+    doc = get_user_doc(username).get()
+    if not doc.exists:
+        return None
+    return doc.to_dict().get("hashed_password")
 
 def create_user(username, hashed_password):
-    user_dir = os.path.join(DB_DIR, username)
-    os.makedirs(user_dir, exist_ok=True)
-    save_txt(os.path.join(user_dir, "hashed_password.txt"), hashed_password)
+    user_data = {
+        "username": username,
+        "hashed_password": hashed_password,
+        "is_active": True,
+        "elo": 0,
+        "games_played": 0,
+        "games_won": 0,
+        "games_lost": 0
+    }
+    get_user_doc(username).set(user_data)
 
 def get_users_list(return_anonymous=False):
-    os.makedirs(DB_DIR, exist_ok=True)
-    users = os.listdir(DB_DIR)
+    users_ref = db.collection("users").stream()
+    usernames = [doc.id for doc in users_ref]
     if not return_anonymous:
-        users = [u for u in users if u != "anonymous"]
-    return users
+        usernames = [u for u in usernames if u != "anonymous"]
+    return usernames
 
 @router.post("/login", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -38,7 +50,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
             detail="No username found. (Go back and register?)",
         )
     hashed_password = get_hashed_password(form_data.username)
-    if not verify_password(form_data.password, hashed_password):
+    if not hashed_password or not verify_password(form_data.password, hashed_password):
         logger.warning(f"Login failed: Incorrect password for user: {form_data.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -50,8 +62,8 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate):
-    users = get_users_list(return_anonymous=True)
-    if user_data.username in users:
+    doc_ref = get_user_doc(user_data.username)
+    if doc_ref.get().exists:
         raise HTTPException(status_code=400, detail="Username already registered")
     hashed_password = get_password_hash(user_data.password)
     create_user(user_data.username, hashed_password)

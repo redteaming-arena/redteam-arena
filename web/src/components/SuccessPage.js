@@ -5,6 +5,7 @@ import LeaderboardComponent from "./Leaderboard";
 import { UserRankingComponent } from "./EloTable";
 import { Button } from "./ui/button";
 import Footer from "./Footer";
+import { Link } from "react-router-dom";
 
 const SuccessPage = ({
   onReset,
@@ -18,7 +19,10 @@ const SuccessPage = ({
   onHomeButton,
   showAbout = false,
   isUserLoggedIn,
+  game,
+  timer_duration,
 }) => {
+
   const [shared, setShared] = React.useState(false);
   const [leaderboardData, setLeaderboardData] = useState(null);
 
@@ -85,11 +89,9 @@ const SuccessPage = ({
     <>
       <div className="flex flex-col items-center justify-center min-h-screen bg-black text-green-500 font-mono p-4 pb-12">
         <div className="absolute top-4 right-4 flex gap-2">
-          <NavButton text={"HOME"} onClick={onHomeButton} />
-          <NavButton
-            text={isUserLoggedIn ? "LOGOUT" : "LOGIN"}
-            onClick={onLogin}
-          />
+          <Link to="/">
+            <NavButton text="HOME" />
+          </Link>
           {showAbout && <NavButton text="ABOUT" onClick={onAbout} />}
         </div>
         <div className="text-center">
@@ -99,17 +101,19 @@ const SuccessPage = ({
             You're a master of persuasion.
           </h2>
           <h3 className="text-md sm:text-xl mb-8">
-            Broken in {60 - Math.max(0, timeTaken)} seconds
+            Broken in {timer_duration - Math.max(0, timeTaken)} seconds
           </h3>
           <h3 className="text-md sm:text-xl mb-8">
             Model: {currentModel}
           </h3>
           <h3 className="text-md sm:text-xl mb-8">
-            Target Phrase: {currentPhrase}
+            {game === "norefund" ? "You successfully obtained a refund" : `Target Phrase: ${currentPhrase}`}
           </h3>
-          <h3 className="text-md sm:text-sm mb-8 max-w-[70%] break-words mx-auto text-left pb-2">
-            Full Model Response: {modelResponse}
-          </h3>
+          {game === "badwords" && (
+            <h3 className="text-md sm:text-sm mb-8 max-w-[70%] break-words mx-auto text-left pb-2">
+              Full Model Response: {modelResponse}
+            </h3>
+          )}
         </div>
         <div className="flex gap-4 mb-8">
           <Button variant="success" onClick={onReset}>
@@ -120,7 +124,7 @@ const SuccessPage = ({
           </Button>
         </div>
         {leaderboardData ? (
-          <UserRankingComponent userData={leaderboardData} />
+          <UserRankingComponent userData={leaderboardData} game={game} />
         ) : (
           <p>Loading leaderboard data...</p>
         )}

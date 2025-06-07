@@ -3,10 +3,18 @@
 import { getToken } from "./auth";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 
-const API_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
+const API_URL = process.env.REACT_APP_BACKEND_URL || "http://127.0.0.1:8000";
 
 const handleResponse = async response => {
-  const data = await response.json();
+  console.log("Response status:", response.status);
+  let data;
+  try {
+    data = await response.json();
+  } catch (e) {
+    console.error("Failed to parse JSON response:", e);
+    throw new Error("Invalid server response");
+  }
+
   if (!response.ok) {
     console.error("API Error:", data);
     let errorMessage = "An error occurred";
@@ -17,7 +25,7 @@ const handleResponse = async response => {
     }
     throw new Error(errorMessage);
   }
-  // console.log("API Response:", data);
+
   return data;
 };
 
@@ -61,6 +69,7 @@ export const fetchProfile = async () => {
       Authorization: `Bearer ${getToken()}`,
     },
   });
+  console.log(response)
   return handleResponse(response);
 };
 
@@ -145,6 +154,56 @@ export const createGame = async () => {
         // );
       } catch (e) {
         // console.log("Unable to decode token for expiration check");
+      }
+    }
+    throw error;
+  }
+};
+
+export const createNoRefundGame = async () => {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("No authentication token available");
+  }
+
+  try {
+    const response = await fetch(`${API_URL}/api/game/create-norefund`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const text = await response.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("Error parsing JSON:", e);
+      throw new Error("Invalid JSON response");
+    }
+
+    if (!response.ok) {
+      console.error("Error response:", data);
+      throw new Error(data.detail || "Failed to create NoRefund game");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error in createNoRefundGame:", error);
+    if (error.message === "Failed to fetch") {
+      console.error(
+        "Network error. Please check your internet connection and API_URL configuration."
+      );
+    } else if (error.message.includes("Could not validate credentials")) {
+      console.error("Authentication error. Token may be invalid or expired.");
+      // Log token expiration if it's a JWT
+      try {
+        const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+      } catch (e) {
+        // Handle token expiration failure
       }
     }
     throw error;
@@ -274,7 +333,79 @@ export const gameStreamEvent = (sessionId, userInput) => {
   };
 };
 
+// Standard API Call for NoRefund
+export const gameChatNoRefund = async (sessionId, userInput) => {
+  const response = await fetch(
+    `${API_URL}/api/game/chat-norefund?session_id=${sessionId}&user_input=${encodeURIComponent(userInput)}`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+    }
+  );
+  return handleResponse(response);
+};
+
+// Streaming API for NoRefund
+export const gameStreamEventNoRefund = (sessionId, userInput) => {
+  const url = `${API_URL}/api/game/chat-norefund?session_id=${sessionId}&user_input=${encodeURIComponent(userInput)}`;
+
+  return {
+    subscribe: callbacks => {
+      const controller = new AbortController();
+      const connect = () => {
+        fetchEventSource(url, {
+          method: "POST",
+          headers: {
+            Accept: "text/event-stream",
+            Authorization: `Bearer ${getToken()}`,
+          },
+          signal: controller.signal,
+
+          onopen(response) {
+            if (response.ok && response.status === 200) {
+              if (callbacks.onopen) callbacks.onopen();
+            } else {
+              throw new Error(
+                `Failed to open connection: ${response.status} ${response.statusText}`
+              );
+            }
+          },
+          onmessage(event) {
+            if (callbacks.onmessage) callbacks.onmessage(event);
+          },
+          onclose() {
+            if (callbacks.onclose) callbacks.onclose();
+          },
+          onerror(err) {
+            console.warn("EventSource failed:", err);
+            if (callbacks.onerror) callbacks.onerror(err);
+          },
+        });
+      };
+
+      connect();
+
+      return {
+        close: () => {
+          controller.abort();
+        },
+      };
+    },
+  };
+};
+
 export const getChatHistory = async sessionId => {
+  const response = await fetch(`${API_URL}/api/game/history/${sessionId}`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+  return handleResponse(response);
+};
+
+export const getSessionHistory = async sessionId => {
   const response = await fetch(`${API_URL}/api/game/history/${sessionId}`, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
@@ -316,10 +447,54 @@ export const writeSession = async sessionId => {
     }
 
     const data = await response.json();
-    // console.log("Server response:", data);
+    console.log("Server response:", data);
     return data;
   } catch (error) {
     console.error("Error in writeSession:", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    } else {
+      console.error("Unknown error:", error);
+    }
+    throw error;
+  }
+};
+
+export const writeSessionNoRefund = async sessionId => {
+  // console.log("Attempting to write NoRefund session with ID:", sessionId);
+  try {
+    if (!sessionId) {
+      throw new Error("Session ID is required");
+    }
+
+    const url = new URL(`${API_URL}/api/game/write_session`);
+    url.searchParams.append("session_id", sessionId);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+
+    // console.log("Response status:", response.status);
+    // console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error("Server Error:", errorData);
+      throw new Error(
+        JSON.stringify(errorData) || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    const data = await response.json();
+    // console.log("Server response:", data);
+    return data;
+  } catch (error) {
+    console.error("Error in writeSessionNoRefund:", error);
     if (error instanceof Error) {
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);

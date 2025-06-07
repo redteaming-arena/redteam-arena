@@ -8,6 +8,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from app.core.config import settings
 from app.core.utils import DB_DIR
+from app.core.firestore import db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/login")
@@ -36,15 +37,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        logger.info("Payload:", payload)
+        logger.info(f"Payload: {payload}")
         username: str = payload.get("sub")
         if not username:
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    os.makedirs(DB_DIR, exist_ok=True)
-    users = os.listdir(DB_DIR)
-    if username not in users:
-        print("payload:", payload)
+
+    user_ref = db.collection("users").document(username)
+    if not user_ref.get().exists:
+        logger.warning(f"User {username} not found in Firestore")
         raise credentials_exception
+
     return username

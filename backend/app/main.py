@@ -1,4 +1,3 @@
-
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,19 +5,32 @@ from dotenv import load_dotenv
 
 from app.api import auth, games, leaderboard, users
 from app.core.config import settings
+from app.database import Base, engine
 
 load_dotenv()
 
 app = FastAPI(title=settings.PROJECT_NAME, docs_url="/docs" if os.environ.get("ENV") == "DEV" else None)
 
+@app.on_event("startup")
+def create_local_db():
+    Base.metadata.create_all(bind=engine)
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["https://redteam-arena.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  # or ["*"] for all origins (not recommended for prod)
+#     allow_credentials=False,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 # Include routers
 app.include_router(auth.router, prefix="/api", tags=["auth"])

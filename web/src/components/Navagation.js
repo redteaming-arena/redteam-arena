@@ -17,13 +17,16 @@ const NavBar = ({
 
   const navItems = [
     { text: isUserLoggedIn ? "LOGOUT" : "LOGIN", onClick: onLoginButton },
-    { text: "LEADERBOARD", onClick: () => navigate("/leaderboard") },
+    ...(isUserLoggedIn
+      ? []
+      : [{ text: "REGISTER", onClick: onRegisterButton }]),
     ...(isUserLoggedIn
       ? [{ text: "PROFILE", onClick: () => navigate("/profile") }]
       : []),
+    { text: "LEADERBOARD", onClick: () => navigate("/leaderboard") },
     ...(isUserLoggedIn
       ? [{ text: "HISTORY", onClick: () => navigate("/history") }]
-      : [{ text: "REGISTER", onClick: onRegisterButton }]),
+      : []),
     ...(showAbout ? [{ text: "ABOUT", onClick: onAbout }] : []),
     { text: "GITHUB", onClick: () => window.open("https://github.com/redteaming-arena/redteam-arena", "_blank").focus() },
   ];
@@ -31,7 +34,9 @@ const NavBar = ({
   return (
     <nav className="w-full bg-black text-white p-4">
       <div className="flex justify-between items-center">
-        <div className="text-xl font-bold">RedTeam Arena</div>
+        <button onClick={() => navigate("/")} className="text-xl font-bold hover:text-cyan-400 transition-colors">
+          RedTeam Arena
+        </button>
         <div className="md:hidden">
           <button onClick={toggleMenu} className="focus:outline-none">
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}

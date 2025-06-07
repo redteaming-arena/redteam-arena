@@ -8,3 +8,5 @@ backend/app/data/
 .venv/
 sql_redarena.db
 alembic/versions/
+*.json
+redteam/

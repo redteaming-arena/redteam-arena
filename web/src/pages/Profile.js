@@ -34,7 +34,17 @@ export default function Profile() {
       try {
         const profile = await fetchProfile();
         // console.log({ profile });
-        setUser(profile);
+        if (profile.global_rank === -1) {
+          setUser({
+            username: profile.username || "Unknown",
+            elo_rating: profile.elo_rating || 0,
+            global_rank: "N/A",
+            games_played: 0,
+            games_won: 0,
+          });
+        } else {
+          setUser(profile);
+        }
       } catch (error) {
         console.error("Error fetching chat history:", error);
         setError("Failed to load chat history");
@@ -88,7 +98,9 @@ export default function Profile() {
           <div className="flex flex-col">
             <span className="text-sm text-muted-foreground">Win Rate</span>
             <span className="text-lg font-semibold">
-              {(100 * (user.games_won / user.games_played)).toFixed(2)}%
+              {user.games_played === 0
+                ? "0%"
+                : `${(100 * (user.games_won / user.games_played)).toFixed(2)}%`}
             </span>
           </div>
           <div className="flex flex-col">
@@ -108,7 +120,7 @@ export default function Profile() {
 
   return (
     <div className="w-screen h-screen bg-black flex flex-col items-center justify-center">
-      <div className="w-full flex justify-end gap-x-2 p-4 absolute top-0 right-0 text-white">
+      <div className="w-full flex justify-end gap-x-2 p-4 absolute top-0 right-0 text-white font-mono">
         <NavButton text="HOME" onClick={() => navigate("/")} />
         <NavButton
           text="LEADERBOARD"
